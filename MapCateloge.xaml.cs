@@ -3758,55 +3758,146 @@ namespace EWLDitital.PresentationLayer.Views
         private async void Geodetic_EditRoot_Click(object sender, RoutedEventArgs e)
         {
             // densifyandgeneralize();
-            try
+            if (SelectedRoutName == "" && importedlinepoints.Count > 0)
             {
-                savemenu.IsEnabled = true;
-                _sketchOverlay.Graphics.Clear();
-                routewaypointoverlay.Graphics.Clear();
-                MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-
-                Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-
-                DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
-                DataTable dt = new DataTable();
-                dt = objRout.GetRouteLineDetails(SelectedRoutName);
-                for (int i = 0; i < dt.Rows.Count; i++)
+                try
                 {
-                    if (i + 1 == dt.Rows.Count + 1)
+                    savemenu.IsEnabled = true;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+
+                    Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+
+                    for (int i = 0; i < importedlinepoints.Count; i++)
+                    {
+                        if (i + 1 == importedlinepoints.Count + 1)
+                        {
+
+                            break;
+
+                        }
+                        else
+                        {
+                            // var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                            // var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+                           // MapPoint mp2 = importedlinepoints[i];
+                            MapPoint mp1 = new MapPoint(importedlinepoints[i].X,importedlinepoints[i].Y, SpatialReferences.Wgs84);
+                            MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(3857));
+                            geodetcipointcollection_webmerc.Add(mp1_aftertransfor);
+                        }
+                    }
+
+                    var l1 = loadrouteline_create(normalizedimportedpoints);
+                    var editPolyline1 = l1 as Polyline;
+                    this.editlinebuilder = new PolylineBuilder(editPolyline1);
+                    var item2geom = loadrouteline_geom_create_new(normalizedimportedpoints);
+                    var editPolyline2 = item2geom as Polyline;//add this
+
+                    if (editlinebuilder.Parts.Count > 1)
                     {
 
-                        break;
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
 
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline2);
                     }
                     else
                     {
-                        var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
-                        var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
-                        MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
-                        //MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(4326));
-                        geodetcipointcollection_webmerc.Add(mp1);
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
+
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline1);// add this
+
                     }
+
+
+                   // var l2 = loadrouteline_create(importedlinepoints);
+                   // var editPolyline3 = l1 as Polyline;
+                   // this.editlinebuilder = new PolylineBuilder(editPolyline1);
+
+                   
+
+                   // var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
+                   // Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
+
+                    // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
+                   
+                }
+                catch (TaskCanceledException)
+                {
+                    // Ignore ... let the user cancel editing
                 }
 
-                var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
-                Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
-
-                // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
-                var config = new SketchEditConfiguration()
-                {
-                    AllowVertexEditing = true,
-                    AllowMove = true,
-                    AllowRotate = false,
-
-                    ResizeMode = SketchResizeMode.None
-                };
-                sketchEditor();
-                Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(geom1);
             }
-            catch (TaskCanceledException)
+            else
             {
-                // Ignore ... let the user cancel editing
+
+
+                try
+                {
+                    savemenu.IsEnabled = true;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+
+                    Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+
+                    DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
+                    DataTable dt = new DataTable();
+                    dt = objRout.GetRouteLineDetails(SelectedRoutName);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        if (i + 1 == dt.Rows.Count + 1)
+                        {
+
+                            break;
+
+                        }
+                        else
+                        {
+                            var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                            var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+                            MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
+                            //MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(4326));
+                            geodetcipointcollection_webmerc.Add(mp1);
+                        }
+                    }
+
+                    var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
+                    Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
+
+                    // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
+                    var config = new SketchEditConfiguration()
+                    {
+                        AllowVertexEditing = true,
+                        AllowMove = true,
+                        AllowRotate = false,
+
+                        ResizeMode = SketchResizeMode.None
+                    };
+                    sketchEditor();
+                    Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(geom1);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Ignore ... let the user cancel editing
+                }
             }
+
+            
 
 
         }
@@ -3850,10 +3941,17 @@ namespace EWLDitital.PresentationLayer.Views
 
                         objMgr.DeleteRouteLineDetailsByName(txtRouteName.Text.Trim());
                         objMgr.DeleteRouteLineByName(txtRouteName.Text.Trim());
-
+                        int count = 0;
                         int result1 = objRout.InsertRoute(txtRouteName.Text, waypointcount);
                         if (result1 > 0)
                         {
+                            if (importedlinepoints.Count > 1)//to reset that exisiting imported points
+                            {
+                                importedlinepoints.Clear();
+                                normalizedimportedpoints.Clear();
+                                count++;
+
+                            }
                             foreach (var ter in geodroutepoints)
                             {
                                 double lat = ter.X;
@@ -3873,8 +3971,16 @@ namespace EWLDitital.PresentationLayer.Views
                 else
                 {
                     int result1 = objRout.InsertRoute(txtRouteName.Text, waypointcount);
+                    int count = 0;
                     if (result1 > 0)
                     {
+                        if (importedlinepoints.Count > 1)
+                        {
+                            importedlinepoints.Clear();
+                            normalizedimportedpoints.Clear();
+                            count++;
+
+                        }
                         foreach (var ter in geodroutepoints)
                         {
                             double lat = ter.X;
@@ -3996,8 +4102,16 @@ namespace EWLDitital.PresentationLayer.Views
                     else
                     {
                         int result = objRout1.InsertRoute(txtRouteName.Text, waypointcount);
+                        int count = 0;
                         if (result > 0)
                         {
+                            if (importedlinepoints.Count > 1)
+                            {
+                                importedlinepoints.Clear();
+                                normalizedimportedpoints.Clear();
+                                count++;
+
+                            }
                             foreach (var ter in geodroutepoints)
                             {
                                 double lat = ter.X;
@@ -4134,6 +4248,7 @@ namespace EWLDitital.PresentationLayer.Views
                     _mappoint.Add(mpt);
                     importedlinepoints.Add(mpt);
                 }
+                normalizedimportedpoints = CalcNormalize_latest(_mappoint);
                 //SelectPrdctsunderRoot_Click(_mappoint);
                 //distancemes();
 
