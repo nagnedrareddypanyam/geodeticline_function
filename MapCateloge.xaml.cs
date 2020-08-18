@@ -33,6 +33,7 @@ using Esri.ArcGISRuntime.Tasks.Offline;
 using Esri.ArcGISRuntime.Portal;
 using System.Xml;
 using Polyline = Esri.ArcGISRuntime.Geometry.Polyline;
+using System.Globalization;
 
 namespace EWLDitital.PresentationLayer.Views
 {
@@ -132,7 +133,7 @@ namespace EWLDitital.PresentationLayer.Views
                        
                }";
         private const string polylineazimuthDefinitionJson =
-       @"{
+      @"{
                     ""labelExpressionInfo"":{""expression"":""$feature.ShortName""},
                     ""labelPlacement"":""esriServerLinePlacementAboveAlong"",
                     ""symbol"":
@@ -170,7 +171,6 @@ namespace EWLDitital.PresentationLayer.Views
         public static LabelDefinition portlabeldefintion = LabelDefinition.FromJson(portLabelDefinitionJson);
         public static LabelDefinition labelDefinition = LabelDefinition.FromJson(LabelDefinitionJson);
         public static LabelDefinition polylinelabelDef = LabelDefinition.FromJson(polylineazimuthDefinitionJson);
-
         PolylineBuilder editlinebuilder;
         IReadOnlyList<MapPoint> editlinemp = new List<MapPoint>();
 
@@ -212,12 +212,16 @@ namespace EWLDitital.PresentationLayer.Views
         GraphicsOverlay generaloverlay = new GraphicsOverlay()
         {
             LabelsEnabled = true,
+            MaxScale = 62500,
+            MinScale = 32000000,
             Id = "2",
             LabelDefinitions = { labelDefinition }
         };
         GraphicsOverlay coastaloverlay = new GraphicsOverlay()
         {
             LabelsEnabled = true,
+            MaxScale = 62500,
+            MinScale = 8000000,
             Id = "3",
             LabelDefinitions = { labelDefinition }
         };
@@ -225,11 +229,15 @@ namespace EWLDitital.PresentationLayer.Views
         {
             LabelsEnabled = true,
             Id = "4",
+            MaxScale = 62500,
+            MinScale = 2000000,
             LabelDefinitions = { labelDefinition }
         };
         GraphicsOverlay harbouroverlay = new GraphicsOverlay()
         {
             LabelsEnabled = true,
+            MaxScale = 62500,
+            MinScale = 500000,
             Id = "5",
             LabelDefinitions = { labelDefinition }
         };
@@ -237,6 +245,8 @@ namespace EWLDitital.PresentationLayer.Views
         GraphicsOverlay berthingoverlay = new GraphicsOverlay()
         {
             LabelsEnabled = true,
+            MaxScale = 62500,
+            MinScale = 125000,
             Id = "6",
             LabelDefinitions = { labelDefinition }
         };
@@ -344,7 +354,10 @@ namespace EWLDitital.PresentationLayer.Views
         public Dictionary<string, Esri.ArcGISRuntime.Geometry.Geometry> geometrycollection = new Dictionary<string, Esri.ArcGISRuntime.Geometry.Geometry>();
         readonly AVCSManager objMgr = new AVCSManager();
 
-
+        GraphicsOverlay _sketchRectOverlay = new GraphicsOverlay()
+        {
+            Id= "_sketchRectOverlay"
+        };
         public string crew = "";
         public SketchCreationMode creationMode;
         public Esri.ArcGISRuntime.Geometry.Geometry g1;
@@ -370,198 +383,232 @@ namespace EWLDitital.PresentationLayer.Views
         public List<string> ScaleItems = new List<string>();
         public async void Bindcheckpout()
         {
-            bool result = false;
-            tabcontroler.Items.Clear();
-            int i = 0;
-            DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
-            DataTable dt = new DataTable();
-            DataTable dt1 = new DataTable();
-            DataTable dt2 = new DataTable();
-            DataTable dt3 = new DataTable();
-            DataTable dt4 = new DataTable();
-            DataTable dt5 = new DataTable();
-
-            LoadingAdorner.IsAdornerVisible = true;
-            await Task.Delay(2000);
-
-
-            DataTable chkdt = new DataTable();
-
-            chkdt = objCart.GetShoppingCartByAVCS();
-
-            List<DataRow> listRowsToDelete = new List<DataRow>();
-            List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
-
-            foreach (var item in MyMapView.GraphicsOverlays)
+            try
             {
-                if (item.Id == "7" || item.Id == "8" || item.Id == "9")
+
+
+                bool result = false;
+                tabcontroler.Items.Clear();
+                int i = 0;
+                DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
+                DataTable dt = new DataTable();
+                DataTable dt1 = new DataTable();
+                DataTable dt2 = new DataTable();
+                DataTable dt3 = new DataTable();
+                DataTable dt4 = new DataTable();
+                DataTable dt5 = new DataTable();
+
+                LoadingAdorner.IsAdornerVisible = true;
+                await Task.Delay(2000);
+
+
+                DataTable chkdt = new DataTable();
+
+                chkdt = objCart.GetShoppingCartByAVCS();
+
+                List<DataRow> listRowsToDelete = new List<DataRow>();
+                List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
+
+                foreach (var item in MyMapView.GraphicsOverlays)
                 {
-                    grc.Add(item);
-                }
-            }
-            string sa = "";
-            foreach (DataRow item1 in chkdt.Rows)
-            {
-                sa += item1["ShortName"].ToString() + ",";
-
-            }
-
-            foreach (var item in grc.SelectMany(x => x.Graphics))
-            {
-                if (sa.Contains(item.Attributes["ShortName"].ToString()))
-                {
-                    XElement xele = XElement.Parse(item.Attributes["SubUnit"].ToString());
-                    var dddd = xele.Descendants();
-                    string sd = "";
-                    foreach (var item1 in dddd)
+                    if (item.Id == "7" || item.Id == "8" || item.Id == "9")
                     {
-                        sd += item1.Value + ",";
-
+                        grc.Add(item);
                     }
-                    foreach (DataRow row in chkdt.Rows)
+                }
+                string sa = "";
+                foreach (DataRow item1 in chkdt.Rows)
+                {
+                    sa += item1["ShortName"].ToString() + ",";
+
+                }
+
+                foreach (var item in grc.SelectMany(x => x.Graphics))
+                {
+                    if (sa.Contains(item.Attributes["ShortName"].ToString()))
                     {
-                        string shname = row["ShortName"].ToString();
-                        if (sd.Contains(shname))
+                        XElement xele = XElement.Parse(item.Attributes["SubUnit"].ToString());
+                        var dddd = xele.Descendants();
+                        string sd = "";
+                        foreach (var item1 in dddd)
                         {
-                            listRowsToDelete.Add(row);
-                            result = true;
+                            sd += item1.Value + ",";
+
+                        }
+                        foreach (DataRow row in chkdt.Rows)
+                        {
+                            string shname = row["ShortName"].ToString();
+                            if (sd.Contains(shname))
+                            {
+                                listRowsToDelete.Add(row);
+                                result = true;
+                            }
                         }
                     }
                 }
-            }
 
-            foreach (DataRow drowToDelete in listRowsToDelete)
-            {
-                chkdt.Rows.Remove(drowToDelete);// Calling Remove is the same as calling Delete and then calling AcceptChanges
-            }
-            chkdt.AcceptChanges();
-
-            tabcontroler.Items.Clear();
-
-            dt = objCart.GetShoppingCartByAVCSProduct("AVCS Products");
-
-            dt1 = objCart.GetShoppingCartByProduct("ADLL");
-            dt2 = objCart.GetShoppingCartByProduct("ADRS");
-            dt3 = objCart.GetShoppingCartByProduct("e-Nautical Publications");
-            dt4 = objCart.GetShoppingCartByProduct("Misc Publications");
-            dt5 = objCart.GetShoppingCartByProduct("TotalTide");
-            if (chkdt.Rows.Count > 0)
-            {
-                i = i + 1;
-                avcs_tab.Visibility = Visibility.Visible;
-
-                tabcontroler.Items.Add(avcs_tab);
-                avcs_tab.IsSelected = true;
-                if (result)
+                foreach (DataRow drowToDelete in listRowsToDelete.Distinct())
                 {
-                    checkoutGrid.ItemsSource = chkdt.DefaultView;
+                    if (sa.Contains(drowToDelete["ShortName"].ToString()))
+                    {
+                            chkdt.Rows.Remove(drowToDelete);
+                            chkdt.AcceptChanges();
+                    }
+                }
+                
+
+                tabcontroler.Items.Clear();
+
+                dt = objCart.GetShoppingCartByAVCSProduct("AVCS Products");
+
+                dt1 = objCart.GetShoppingCartByProduct("ADLL");
+                dt2 = objCart.GetShoppingCartByProduct("ADRS");
+                dt3 = objCart.GetShoppingCartByProduct("e-Nautical Publications");
+                dt4 = objCart.GetShoppingCartByProduct("Misc Publications");
+                dt5 = objCart.GetShoppingCartByProduct("TotalTide");
+                if (chkdt.Rows.Count > 0)
+                {
+                    i = i + 1;
+                    avcs_tab.Visibility = Visibility.Visible;
+
+                    tabcontroler.Items.Add(avcs_tab);
+                    avcs_tab.IsSelected = true;
+                    if (result)
+                    {
+                        checkoutGrid.ItemsSource = chkdt.DefaultView;
+                    }
+                    else
+                    {
+
+                        checkoutGrid.ItemsSource = dt.DefaultView;
+                    }
                 }
                 else
                 {
+                    avcs_tab.Visibility = Visibility.Hidden;
+                    checkoutGrid.ItemsSource = null;
+                }
 
-                    checkoutGrid.ItemsSource = dt.DefaultView;
-                }
-            }
-            else
-            {
-                avcs_tab.Visibility = Visibility.Hidden;
-                checkoutGrid.ItemsSource = null;
-            }
-
-            if (dt1.Rows.Count > 0)
-            {
-                i = i + 1;
-                adll_tab.Visibility = Visibility.Visible;
-                tabcontroler.Items.Add(adll_tab);
-                checkoutGrid1.ItemsSource = dt1.DefaultView;
-                if (i == 1)
+                if (dt1.Rows.Count > 0)
                 {
-                    adll_tab.IsSelected = true;
+                    i = i + 1;
+                    adll_tab.Visibility = Visibility.Visible;
+                    tabcontroler.Items.Add(adll_tab);
+                    checkoutGrid1.ItemsSource = dt1.DefaultView;
+                    if (i == 1)
+                    {
+                        adll_tab.IsSelected = true;
+                    }
                 }
-            }
-            else
-            {
-                adll_tab.Visibility = Visibility.Hidden;
-                checkoutGrid1.ItemsSource = null;
-            }
-            if (dt2.Rows.Count > 0)
-            {
-                i = i + 1;
-                adrs_tab.Visibility = Visibility.Visible;
-                tabcontroler.Items.Add(adrs_tab);
-                checkoutGrid2.ItemsSource = dt2.DefaultView;
-                if (i == 1)
+                else
                 {
-                    adrs_tab.IsSelected = true;
+                    adll_tab.Visibility = Visibility.Hidden;
+                    checkoutGrid1.ItemsSource = null;
                 }
-            }
-            else
-            {
-                adrs_tab.Visibility = Visibility.Hidden;
-                checkoutGrid2.ItemsSource = null;
-            }
-            if (dt3.Rows.Count > 0)
-            {
-                i = i + 1;
-                enp_tab.Visibility = Visibility.Visible;
-                tabcontroler.Items.Add(enp_tab);
-                checkoutGrid3.ItemsSource = dt3.DefaultView;
-                if (i == 1)
+                if (dt2.Rows.Count > 0)
                 {
-                    enp_tab.IsSelected = true;
+                    i = i + 1;
+                    adrs_tab.Visibility = Visibility.Visible;
+                    tabcontroler.Items.Add(adrs_tab);
+                    checkoutGrid2.ItemsSource = dt2.DefaultView;
+                    if (i == 1)
+                    {
+                        adrs_tab.IsSelected = true;
+                    }
                 }
-            }
-            else
-            {
-                enp_tab.Visibility = Visibility.Hidden;
-                checkoutGrid3.ItemsSource = null;
-            }
-            if (dt4.Rows.Count > 0)
-            {
-                i = i + 1;
-                misc_tab.Visibility = Visibility.Visible;
-                tabcontroler.Items.Add(misc_tab);
-                checkoutGrid4.ItemsSource = dt4.DefaultView;
-                if (i == 1)
+                else
                 {
-                    misc_tab.IsSelected = true;
+                    adrs_tab.Visibility = Visibility.Hidden;
+                    checkoutGrid2.ItemsSource = null;
                 }
-            }
-            else
-            {
-                misc_tab.Visibility = Visibility.Hidden;
-                checkoutGrid4.ItemsSource = null;
-            }
-            if (dt5.Rows.Count > 0)
-            {
-                i = i + 1;
-                tides_tab.Visibility = Visibility.Visible;
-                checkoutGrid5.ItemsSource = dt5.DefaultView;
-                tabcontroler.Items.Add(tides_tab);
-                if (i == 1)
+                if (dt3.Rows.Count > 0)
                 {
-                    tides_tab.IsSelected = true;
+                    i = i + 1;
+                    enp_tab.Visibility = Visibility.Visible;
+                    tabcontroler.Items.Add(enp_tab);
+                    checkoutGrid3.ItemsSource = dt3.DefaultView;
+                    if (i == 1)
+                    {
+                        enp_tab.IsSelected = true;
+                    }
                 }
+                else
+                {
+                    enp_tab.Visibility = Visibility.Hidden;
+                    checkoutGrid3.ItemsSource = null;
+                }
+                if (dt4.Rows.Count > 0)
+                {
+                    i = i + 1;
+                    misc_tab.Visibility = Visibility.Visible;
+                    tabcontroler.Items.Add(misc_tab);
+                    checkoutGrid4.ItemsSource = dt4.DefaultView;
+                    if (i == 1)
+                    {
+                        misc_tab.IsSelected = true;
+                    }
+                }
+                else
+                {
+                    misc_tab.Visibility = Visibility.Hidden;
+                    checkoutGrid4.ItemsSource = null;
+                }
+                if (dt5.Rows.Count > 0)
+                {
+                    i = i + 1;
+                    tides_tab.Visibility = Visibility.Visible;
+                    checkoutGrid5.ItemsSource = dt5.DefaultView;
+                    tabcontroler.Items.Add(tides_tab);
+                    if (i == 1)
+                    {
+                        tides_tab.IsSelected = true;
+                    }
+                }
+                else
+                {
+                    tides_tab.Visibility = Visibility.Hidden;
+                    checkoutGrid5.ItemsSource = null;
+                }
+                LoadingAdorner.IsAdornerVisible = false;
             }
-            else
+            catch (Exception ex)
             {
-                tides_tab.Visibility = Visibility.Hidden;
-                checkoutGrid5.ItemsSource = null;
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
-            LoadingAdorner.IsAdornerVisible = false;
         }
-        public void BindRouteLine()
+        public void BindRouteLine(string RouteType)
         {
-            DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
-            DataTable dt = new DataTable();
-            dt = objCart.GetRouteLine();
-            if (dt.Rows.Count > 0)
+            try
             {
-                RouteGrid.ItemsSource = dt.DefaultView;
+                DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
+                DataTable dt = new DataTable();
+                dt = objCart.GetRouteLine(RouteType);
+                if (RouteType == "1")
+                {
+                    if (dt.Rows.Count > 0)
+                    {
+                        RouteGrid.ItemsSource = dt.DefaultView;
+                    }
+                    else
+                    {
+                        RouteGrid.ItemsSource = null;
+                    }
+                }
+                else
+                {
+                    if (dt.Rows.Count > 0)
+                    {
+                        RouteGrid1.ItemsSource = dt.DefaultView;
+                    }
+                    else
+                    {
+                        RouteGrid1.ItemsSource = null;
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                RouteGrid.ItemsSource = null;
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
         public MapCateloge()
@@ -580,42 +627,46 @@ namespace EWLDitital.PresentationLayer.Views
 
         public void PortnameLabelgenerator()
         {
-            string queuePath = AppDomain.CurrentDomain.BaseDirectory + "\\XMLFiles" + "\\PortsGazeteer.xml";
-            // Create a new unique value renderer.
-            XDocument prtnamesLabel = XDocument.Load(queuePath);
-
-
-            var commands = from cmd in prtnamesLabel.Descendants("PortsGazeteer")
-                           select new
-                           {
-                               PORT_ID = (string)cmd.Element("PORT_ID"),
-                               NAME = (string)cmd.Element("NAME"),
-                               LAT = (string)cmd.Element("LAT"),
-                               Long = (string)cmd.Element("LONG"),
-                               SCAMIN = (string)cmd.Element("SCAMIN"),
-
-
-                           };
-            foreach (var item in commands)
+            try
             {
+                string queuePath = AppDomain.CurrentDomain.BaseDirectory + "\\XMLFiles" + "\\PortsGazeteer.xml";
+                // Create a new unique value renderer.
+                XDocument prtnamesLabel = XDocument.Load(queuePath);
 
-                if (item.NAME != null)
+
+                var commands = from cmd in prtnamesLabel.Descendants("PortsGazeteer")
+                               select new
+                               {
+                                   PORT_ID = (string)cmd.Element("PORT_ID"),
+                                   NAME = (string)cmd.Element("NAME"),
+                                   LAT = (string)cmd.Element("LAT"),
+                                   Long = (string)cmd.Element("LONG"),
+                                   SCAMIN = (string)cmd.Element("SCAMIN"),
+
+
+                               };
+                foreach (var item in commands)
                 {
-                    var lat = double.Parse(item.LAT);
-                    var longi = double.Parse(item.Long);
-                    var text = item.NAME;
-                    var scamin = item.SCAMIN;
-                    MapPoint mp = new MapPoint(longi, lat, SpatialReferences.Wgs84);
-                    portpoint_graphic_creation(mp, text, scamin);
+
+                    if (item.NAME != null)
+                    {
+                        var lat = double.Parse(item.LAT);
+                        var longi = double.Parse(item.Long);
+                        var text = item.NAME;
+                        var scamin = item.SCAMIN;
+                        MapPoint mp = new MapPoint(longi, lat, SpatialReferences.Wgs84);
+                        portpoint_graphic_creation(mp, text, scamin);
+                    }
+                    else
+                    {
+
+                        break;
+                    }
                 }
-                else
-                {
-
-                    break;
-                }
-
-
-
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
@@ -654,7 +705,7 @@ namespace EWLDitital.PresentationLayer.Views
                 // create a text symbol: define color, font, size, and text for the label
                 TextSymbol textSym = new TextSymbol(Name, System.Drawing.Color.Blue, 10, Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Left,
                                                              Esri.ArcGISRuntime.Symbology.VerticalAlignment.Bottom);
-                var markerSym = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, System.Drawing.Color.Green, 2.5);
+                var markerSym = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, System.Drawing.Color.Blue, 2.5);
                 // create a graphic for the text (apply TextSymbol)
                 // var textGraphic = new Graphic(mapPoint, textSym);
 
@@ -676,7 +727,7 @@ namespace EWLDitital.PresentationLayer.Views
                 // create a text symbol: define color, font, size, and text for the label
                 TextSymbol textSym = new TextSymbol(Name, System.Drawing.Color.Blue, 10, Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Left,
                                                              Esri.ArcGISRuntime.Symbology.VerticalAlignment.Bottom);
-                var markerSym = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, System.Drawing.Color.Red, 2.5);
+                var markerSym = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, System.Drawing.Color.Blue, 2.5);
                 // create a graphic for the text (apply TextSymbol)
                 var textGraphic = new Graphic(mapPoint, textSym);
 
@@ -691,7 +742,7 @@ namespace EWLDitital.PresentationLayer.Views
             }
         }
 
-        public  void Initialize()
+        public void Initialize()
         {
             try
             {
@@ -724,6 +775,8 @@ namespace EWLDitital.PresentationLayer.Views
 
                 MyMapView.GraphicsOverlays.Add(routewaypointoverlay);
 
+                MyMapView.GraphicsOverlays.Add(_sketchRectOverlay);
+
                 _sketchOverlay.Id = "seven";
 
                 graphiclaysoff();
@@ -740,8 +793,9 @@ namespace EWLDitital.PresentationLayer.Views
 
                 MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
                 MyMapView.MouseMove += MapView_MouseMoved;
-                MyMapView.PreviewMouseWheel += mouseWheel_Changed;
-                MyMapView.PreviewMouseMove += MapView_Mouse_move_cursor_line;
+                MyMapView.PreviewMouseWheel += mouseWheel_scale;
+                MyMapView.MouseRightButtonDown += mouseWheel_rightclic;
+                // MyMapView.PreviewMouseWheel += mouseWheel_Changed;
 
             }
             catch (Exception ex)
@@ -749,77 +803,135 @@ namespace EWLDitital.PresentationLayer.Views
                 MessageBox.Show(ex.Message);
             }
         }
-        private async void MapView_Mouse_move_cursor_line(object sender, MouseEventArgs e)
+        private void mouseWheel_rightclic(object sender,MouseEventArgs e)//declaring a function
         {
-            var pixelTolerance = 1;
-            var returnPopupsOnly = false;
-            var maxResults = 100;
-            System.Windows.Point tapScreenPoint = e.GetPosition(MyMapView);
-           // MapPoint mapPoint = geoViewInputEventArgs.Location;
-
-           IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
-           foreach(var te in idGraphicOverlayResults)
+            try
             {
-                if (te.GraphicsOverlay == _sketchOverlay)
+                string message = "Are you sure you want to complete the route line?";
+                string caption = "Confirmation";
+                lstSelectedRoute.Clear();
+                SelectedRoutName = "";
+
+                MessageBoxButton buttons = MessageBoxButton.YesNo;
+                MessageBoxImage icon = MessageBoxImage.Question;
+                if (MessageBox.Show(message, caption, buttons, icon) == MessageBoxResult.Yes)
                 {
-                    Mouse.OverrideCursor = Cursors.Cross;
+                    // OK code here
+                    geodesic_savbtnpoints_webmerccollection.Clear();
+                    //Mouse.OverrideCursor = Cursors.Cross;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    gridrouteline.Clear();//add this new line
+                    importedlinepoints.Clear();
+                    normalizedimportedpoints.Clear();
+                    symbolspointslist_savebtn.Clear();
+                    // Cursor = systemCursor2;
+                    save_Click1(sender, e);
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
                 }
                 else
                 {
-                    Mouse.OverrideCursor = Cursors.Arrow;
+                    return;
                 }
             }
+            catch(Exception ex)
+            {
+
+            }
            
-
         }
-
+        private void mouseWheel_scale(object sender, MouseWheelEventArgs e)//declaring a function
+        {
+            var scal = MyMapView.GetCurrentViewpoint(ViewpointType.CenterAndScale);
+            var scal1 = scal.TargetScale;
+            var displayed_value = scal1.ToString("N0");
+            var displ1 = Convert.ToDouble(displayed_value);
+            var formated_val = displ1.ToString("N0", CultureInfo.InvariantCulture);
+            var finalstring = "Scale View - 1 :" + formated_val;
+            //var displayed_value1 = formated_val.ToString("N0");
+            mylblClickCount1.Content = finalstring;
+        }
         public void GetAVCS()
         {
-            string queuePath = AppDomain.CurrentDomain.BaseDirectory + "\\XMLFiles" + "\\avcs_catalogue.xml";
-            XDocument doc = XDocument.Load(queuePath);
-            int ScalarVariableCount = doc.Root.Descendants("Products")
-                                  .Elements("ENC").Count();
-            Console.WriteLine("count{0}", ScalarVariableCount);
-            var polygonPoints1 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-
-            // var polygonPoints_list = new List<string, string>();
-            var labelPointBass = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-            // IDictionary<string, Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84) > dict = new Dictionary<string, string>();
-            var query = from Polygon in doc.Root.Descendants("ENC")
-                        group Polygon by Polygon.Element("ShortName").Value into gr
-                        select gr;
-
-            var shortname = doc.Root.Descendants("shortname");
-            var srt = shortname.ToString();
-            var reasons = doc.Descendants("Polygon").ToList();
-
-
-            var latitude = new List<string>();
-            var longitude = new List<string>();
-
-            Func<XElement, string, string, string> getAttributeValue = (xElement, name, text) => xElement.Element(name).Value;
-
-
-            foreach (var value in query)
+            try
             {
-                List<XElement> str = new List<XElement>();
-                // textname.Add(value.Key);
-                //  textname.Add(value.Key);
-                var q2 = value.Descendants("Polygon").SelectMany(array => array.Value.ToList());
+                string queuePath = AppDomain.CurrentDomain.BaseDirectory + "\\XMLFiles" + "\\avcs_catalogue.xml";
+                XDocument doc = XDocument.Load(queuePath);
+                int ScalarVariableCount = doc.Root.Descendants("Products")
+                                      .Elements("ENC").Count();
+                Console.WriteLine("count{0}", ScalarVariableCount);
+                var polygonPoints1 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
 
-                value.Descendants("Polygon").ToList().ForEach(item =>
+                // var polygonPoints_list = new List<string, string>();
+                var labelPointBass = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+                // IDictionary<string, Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84) > dict = new Dictionary<string, string>();
+                var query = from Polygon in doc.Root.Descendants("ENC")
+                            group Polygon by Polygon.Element("ShortName").Value into gr
+                            select gr;
+
+                var shortname = doc.Root.Descendants("shortname");
+                var srt = shortname.ToString();
+                var reasons = doc.Descendants("Polygon").ToList();
+
+
+                var latitude = new List<string>();
+                var longitude = new List<string>();
+
+                Func<XElement, string, string, string> getAttributeValue = (xElement, name, text) => xElement.Element(name).Value;
+
+
+                foreach (var value in query)
                 {
-                    str.Add(item);
-                });
-                if (str.Count > 1)
-                {
-                    foreach (var set1 in str)
+                    List<XElement> str = new List<XElement>();
+                    // textname.Add(value.Key);
+                    //  textname.Add(value.Key);
+                    var q2 = value.Descendants("Polygon").SelectMany(array => array.Value.ToList());
+
+                    value.Descendants("Polygon").ToList().ForEach(item =>
                     {
-                        set1.Descendants("Position").ToList().ForEach(item =>
+                        str.Add(item);
+                    });
+                    if (str.Count > 1)
+                    {
+                        foreach (var set1 in str)
+                        {
+                            set1.Descendants("Position").ToList().ForEach(item =>
+                            {
+                                latitude.Add(item.Attribute("latitude").Value);
+                                longitude.Add(item.Attribute("longitude").Value);
+                                polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
+                            });
+                            var q5 = value.Descendants("Metadata").Select(s => new
+                            {
+                                ONE = s.Element("Scale").Value,
+                                TWO = s.Element("Usage").Value,
+                                THREE = s.Element("DatasetTitle").Value,
+                                FOUR = s.Element("Status").Value,
+                                Five = s.Element("Unit").Element("ID").Value,
+                                SIX = s.Element("Unit").Element("Title").Value
+                            }).ToList();
+                            string title = q5[0].THREE;
+                            string Usage = q5[0].TWO;
+                            string Scale = q5[0].ONE;
+                            string Status = q5[0].FOUR;
+                            string UnitId = q5[0].Five;
+                            string UnitTitle = q5[0].SIX;
+
+                            CreateGraphic_Label(polygonPoints1, value.Key, Usage, Scale, title, Status, UnitId, UnitTitle);
+                            polygonPoints1.Clear();
+                        }
+                    }
+                    else
+                    {
+                        value.Descendants("Position").ToList().ForEach(item =>
                         {
                             latitude.Add(item.Attribute("latitude").Value);
                             longitude.Add(item.Attribute("longitude").Value);
                             polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
+
+
                         });
                         var q5 = value.Descendants("Metadata").Select(s => new
                         {
@@ -829,6 +941,7 @@ namespace EWLDitital.PresentationLayer.Views
                             FOUR = s.Element("Status").Value,
                             Five = s.Element("Unit").Element("ID").Value,
                             SIX = s.Element("Unit").Element("Title").Value
+
                         }).ToList();
                         string title = q5[0].THREE;
                         string Usage = q5[0].TWO;
@@ -838,84 +951,83 @@ namespace EWLDitital.PresentationLayer.Views
                         string UnitTitle = q5[0].SIX;
 
                         CreateGraphic_Label(polygonPoints1, value.Key, Usage, Scale, title, Status, UnitId, UnitTitle);
-                        polygonPoints1.Clear();
+
                     }
+                    polygonPoints1.Clear();
                 }
-                else
-                {
-                    value.Descendants("Position").ToList().ForEach(item =>
-                    {
-                        latitude.Add(item.Attribute("latitude").Value);
-                        longitude.Add(item.Attribute("longitude").Value);
-                        polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
-
-
-                    });
-                    var q5 = value.Descendants("Metadata").Select(s => new
-                    {
-                        ONE = s.Element("Scale").Value,
-                        TWO = s.Element("Usage").Value,
-                        THREE = s.Element("DatasetTitle").Value,
-                        FOUR = s.Element("Status").Value,
-                        Five = s.Element("Unit").Element("ID").Value,
-                        SIX = s.Element("Unit").Element("Title").Value
-
-                    }).ToList();
-                    string title = q5[0].THREE;
-                    string Usage = q5[0].TWO;
-                    string Scale = q5[0].ONE;
-                    string Status = q5[0].FOUR;
-                    string UnitId = q5[0].Five;
-                    string UnitTitle = q5[0].SIX;
-
-                    CreateGraphic_Label(polygonPoints1, value.Key, Usage, Scale, title, Status, UnitId, UnitTitle);
-
-                }
-                polygonPoints1.Clear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
         public void GetAVCSFolio()
         {
 
-
-            string s3 = "";
-            IEnumerable<IGrouping<string, XElement>> query;
-
-            query = objMgr.GetAVCSFolio(s3);
-
-            var polygonPoints1 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-            geometrycollection.Clear();
-            //_graphicsOverlay.Graphics.Clear();
-            //_polygonlabelOverlay.Graphics.Clear();
-            polygonPoints1.Clear();
-
-            var textname = new List<string>();
-            var latitude = new List<string>();
-            var longitude = new List<string>();
-            var scale = new List<string>();
-            var usage = new List<string>();
-            var DatasetTitle = new List<string>();
-            foreach (var value in query)
+            try
             {
-                List<XElement> str = new List<XElement>();
-                // textname.Add(value.Key);
-                //  textname.Add(value.Key);
-                var q2 = value.Descendants("Polygon").SelectMany(array => array.Value.ToList());
+                string s3 = "";
+                IEnumerable<IGrouping<string, XElement>> query;
 
-                value.Descendants("Polygon").ToList().ForEach(item =>
+                query = objMgr.GetAVCSFolio(s3);
+
+                var polygonPoints1 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+                geometrycollection.Clear();
+                //_graphicsOverlay.Graphics.Clear();
+                //_polygonlabelOverlay.Graphics.Clear();
+                polygonPoints1.Clear();
+
+                var textname = new List<string>();
+                var latitude = new List<string>();
+                var longitude = new List<string>();
+                var scale = new List<string>();
+                var usage = new List<string>();
+                var DatasetTitle = new List<string>();
+                foreach (var value in query)
                 {
-                    str.Add(item);
-                });
-                if (str.Count > 1)
-                {
-                    foreach (var set1 in str)
+                    List<XElement> str = new List<XElement>();
+                    // textname.Add(value.Key);
+                    //  textname.Add(value.Key);
+                    var q2 = value.Descendants("Polygon").SelectMany(array => array.Value.ToList());
+
+                    value.Descendants("Polygon").ToList().ForEach(item =>
                     {
-                        set1.Descendants("Position").ToList().ForEach(item =>
+                        str.Add(item);
+                    });
+                    if (str.Count > 1)
+                    {
+                        foreach (var set1 in str)
+                        {
+                            set1.Descendants("Position").ToList().ForEach(item =>
+                            {
+                                latitude.Add(item.Attribute("latitude").Value);
+                                longitude.Add(item.Attribute("longitude").Value);
+                                polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
+                            });
+                            var q5 = value.Select(s => new
+                            {
+                                ONE = s.Element("UnitType").Value,
+                                TWO = s.Element("ID").Value,
+                                TRHEE = s.Element("Title").Value,
+                                FOUR = s.Element("SubUnit").ToString()
+                            }).ToList();
+                            string four = q5[0].ONE.Replace("AVCS Folio Regional", "7").Replace("AVCS Folio Port", "8").Replace("AVCS Folio Transit", "9");
+                            string title = q5[0].TRHEE;
+                            string Unite = q5[0].FOUR;
+                            CreateGraphic_Label(polygonPoints1, value.Key, four, "", title, "", Unite, "");
+                            polygonPoints1.Clear();
+                        }
+                    }
+                    else
+                    {
+                        value.Descendants("Position").ToList().ForEach(item =>
                         {
                             latitude.Add(item.Attribute("latitude").Value);
                             longitude.Add(item.Attribute("longitude").Value);
                             polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
+
+
                         });
                         var q5 = value.Select(s => new
                         {
@@ -928,127 +1040,115 @@ namespace EWLDitital.PresentationLayer.Views
                         string title = q5[0].TRHEE;
                         string Unite = q5[0].FOUR;
                         CreateGraphic_Label(polygonPoints1, value.Key, four, "", title, "", Unite, "");
-                        polygonPoints1.Clear();
                     }
+
+                    polygonPoints1.Clear();
                 }
-                else
-                {
-                    value.Descendants("Position").ToList().ForEach(item =>
-                    {
-                        latitude.Add(item.Attribute("latitude").Value);
-                        longitude.Add(item.Attribute("longitude").Value);
-                        polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
-
-
-                    });
-                    var q5 = value.Select(s => new
-                    {
-                        ONE = s.Element("UnitType").Value,
-                        TWO = s.Element("ID").Value,
-                        TRHEE = s.Element("Title").Value,
-                        FOUR = s.Element("SubUnit").ToString()
-                    }).ToList();
-                    string four = q5[0].ONE.Replace("AVCS Folio Regional", "7").Replace("AVCS Folio Port", "8").Replace("AVCS Folio Transit", "9");
-                    string title = q5[0].TRHEE;
-                    string Unite = q5[0].FOUR;
-                    CreateGraphic_Label(polygonPoints1, value.Key, four, "", title, "", Unite, "");
-                }
-
-                polygonPoints1.Clear();
             }
-
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            }
         }
 
         public void GetADRS()
         {
-            IEnumerable<IGrouping<string, XElement>> query;
-            string s3 = "";
-            query = objMgr.Getalrsdigital(s3);
-
-
-            var polygonPoints1 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-            geometrycollection.Clear();
-            polygonPoints1.Clear();
-
-            var textname = new List<string>();
-            var latitude = new List<string>();
-            var longitude = new List<string>();
-            var scale = new List<string>();
-            var usage = new List<string>();
-            var DatasetTitle = new List<string>();
-
-
-            foreach (var value in query)
+            try
             {
-                var q1 = value.Descendants("Metadata").Select(s => new
-                {
-                    ONE = s.Element("DatasetTitle").Value
+                IEnumerable<IGrouping<string, XElement>> query;
+                string s3 = "";
+                query = objMgr.Getalrsdigital(s3);
 
-                }).ToList();
-                string three = q1[0].ONE;
-                string final = "";
-                if (three.Contains("ADRS1345"))
+
+                var polygonPoints1 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+                geometrycollection.Clear();
+                polygonPoints1.Clear();
+
+                var textname = new List<string>();
+                var latitude = new List<string>();
+                var longitude = new List<string>();
+                var scale = new List<string>();
+                var usage = new List<string>();
+                var DatasetTitle = new List<string>();
+
+
+                foreach (var value in query)
                 {
-                    final = "10";
-                }
-                if (three.Contains("ADRS2"))
-                {
-                    final = "11";
-                }
-                if (three.Contains("ADRS6"))
-                {
-                    final = "12";
-                }
-                List<XElement> str = new List<XElement>();
-                var q2 = value.Descendants("Polygon").SelectMany(array => array.Value.ToList());
-                value.Descendants("Polygon").ToList().ForEach(item =>
-                {
-                    str.Add(item);
-                });
-                if (str.Count > 1)
-                {
-                    foreach (var set1 in str)
+                    var q1 = value.Descendants("Metadata").Select(s => new
                     {
-                        set1.Descendants("Position").ToList().ForEach(item =>
+                        ONE = s.Element("DatasetTitle").Value
+
+                    }).ToList();
+                    string three = q1[0].ONE;
+                    string final = "";
+                    if (three.Contains("ADRS1345"))
+                    {
+                        final = "10";
+                    }
+                    if (three.Contains("ADRS2"))
+                    {
+                        final = "11";
+                    }
+                    if (three.Contains("ADRS6"))
+                    {
+                        final = "12";
+                    }
+                    List<XElement> str = new List<XElement>();
+                    var q2 = value.Descendants("Polygon").SelectMany(array => array.Value.ToList());
+                    value.Descendants("Polygon").ToList().ForEach(item =>
+                    {
+                        str.Add(item);
+                    });
+                    if (str.Count > 1)
+                    {
+                        foreach (var set1 in str)
+                        {
+                            set1.Descendants("Position").ToList().ForEach(item =>
+                            {
+                                latitude.Add(item.Attribute("latitude").Value);
+                                longitude.Add(item.Attribute("longitude").Value);
+                                polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
+                            });
+
+                            var q3 = value.Descendants("Metadata").Select(s => new
+                            {
+                                ONE = s.Element("DatasetTitle").Value,
+                                TWO = s.Element("Status").Value
+                            }).ToList();
+                            string title = q3[0].ONE;
+                            string status = q3[0].TWO;
+                            CreateGraphic_Label(polygonPoints1, value.Key, final, "", title, status, "", "");
+                            polygonPoints1.Clear();
+                        }
+                    }
+                    else
+                    {
+                        value.Descendants("Position").ToList().ForEach(item =>
                         {
                             latitude.Add(item.Attribute("latitude").Value);
                             longitude.Add(item.Attribute("longitude").Value);
                             polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
-                        });
 
+                        });
                         var q3 = value.Descendants("Metadata").Select(s => new
                         {
                             ONE = s.Element("DatasetTitle").Value,
                             TWO = s.Element("Status").Value
                         }).ToList();
+
                         string title = q3[0].ONE;
                         string status = q3[0].TWO;
                         CreateGraphic_Label(polygonPoints1, value.Key, final, "", title, status, "", "");
-                        polygonPoints1.Clear();
+
                     }
-                }
-                else
-                {
-                    value.Descendants("Position").ToList().ForEach(item =>
-                    {
-                        latitude.Add(item.Attribute("latitude").Value);
-                        longitude.Add(item.Attribute("longitude").Value);
-                        polygonPoints1.Add(new MapPoint(Convert.ToDouble(item.Attribute("longitude").Value), Convert.ToDouble(item.Attribute("latitude").Value)));
 
-                    });
-                    var q3 = value.Descendants("Metadata").Select(s => new
-                    {
-                        ONE = s.Element("DatasetTitle").Value,
-                        TWO = s.Element("Status").Value
-                    }).ToList();
-
-                    string title = q3[0].ONE;
-                    string status = q3[0].TWO;
-                    CreateGraphic_Label(polygonPoints1, value.Key, final, "", title, status, "", "");
-
+                    polygonPoints1.Clear();
                 }
 
-                polygonPoints1.Clear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
@@ -1095,93 +1195,100 @@ namespace EWLDitital.PresentationLayer.Views
         }
         public void RemoveHeilight()
         {
-            Storyboard sb = Resources["sbHideRightMenu"] as Storyboard;
-            sb.Begin(pnlRightMenu);
-            pnlRightMenu.Visibility = Visibility.Hidden;
-            checkout.Clear();
-
-            DataTable ndt = new DataTable();
-            ndt = objMgr.GetENC();
-            if (ndt.Rows.Count > 0)
+            try
             {
-                foreach (DataRow row in ndt.Rows)
+                Storyboard sb = Resources["sbHideRightMenu"] as Storyboard;
+                sb.Begin(pnlRightMenu);
+                pnlRightMenu.Visibility = Visibility.Hidden;
+                checkout.Clear();
+
+                DataTable ndt = new DataTable();
+                ndt = objMgr.GetENC();
+                if (ndt.Rows.Count > 0)
                 {
-                    checkout.Add(new ShoppingCart()
+                    foreach (DataRow row in ndt.Rows)
                     {
-                        ShortName = row["ShortName"].ToString(),
-                        ProductName = row["ProductName"].ToString()
-                    });
-                    //Mouse_tap_AddedCart(row["ImagePath"].ToString());
+                        checkout.Add(new ShoppingCart()
+                        {
+                            ShortName = row["ShortName"].ToString(),
+                            ProductName = row["ProductName"].ToString()
+                        });
+                        //Mouse_tap_AddedCart(row["ImagePath"].ToString());
+                    }
+                }
+                List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
+                foreach (var item in MyMapView.GraphicsOverlays)
+                {
+                    if (item.Id != "seven")
+                    {
+                        grc.Add(item);
+                    }
+                }
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
+                    {
+
+                        var aa = item.Attributes.Keys.FirstOrDefault();
+
+                        if (cart.Any(x => x.ShortName == aa) || cart1.Any(x => x.FProductId == aa))
+                        {
+                            item.IsSelected = true;
+                            Mouse_tap_select(item);
+                        }
+                        else
+                        {
+                            item.IsSelected = false;
+                            Mouse_Tap_Unselect(item);
+                        }
+                        if (Maincat == "AVCS Chart")
+                        {
+                            if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
+                            {
+                                Mouse_tap_AddedCart(item);
+                            }
+                        }
+                        if (Maincat == "AVCS Folio")
+                        {
+                            if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
+                            {
+                                Mouse_tap_AddedCart(item);
+                            }
+                        }
+                        if (Maincat == "Digital List of Lights")
+                        {
+                            if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADLL"))
+                            {
+                                Mouse_tap_AddedCart(item);
+                            }
+                        }
+                        if (Maincat == "Digital List of Radio Signals")
+                        {
+                            if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADRS"))
+                            {
+                                Mouse_tap_AddedCart(item);
+                            }
+                        }
+                        if (Maincat == "e-NP Sailing Direction")
+                        {
+                            if (checkout.Any(x => x.ShortName == aa && x.ProductName == "e-Nautical Publications"))
+                            {
+                                Mouse_tap_AddedCart(item);
+                            }
+                        }
+                        if (Maincat == "TotalTide")
+                        {
+                            if (checkout.Any(x => x.ShortName == aa && x.ProductName == "TotalTide"))
+                            {
+                                Mouse_tap_AddedCart(item);
+                            }
+                        }
+                    }
                 }
             }
-            List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
-            foreach (var item in MyMapView.GraphicsOverlays)
+            catch (Exception ex)
             {
-                if (item.Id != "seven")
-                {
-                    grc.Add(item);
-                }
-            }
-            foreach (var ter in grc)
-            {
-                foreach (var item in ter.Graphics)
-                {
-
-                    var aa = item.Attributes.Keys.FirstOrDefault();
-
-                    if (cart.Any(x => x.ShortName == aa) || cart1.Any(x => x.FProductId == aa))
-                    {
-                        item.IsSelected = true;
-                        Mouse_tap_select(item);
-                    }
-                    else
-                    {
-                        item.IsSelected = false;
-                        Mouse_Tap_Unselect(item);
-                    }
-                    if (Maincat == "AVCS Chart")
-                    {
-                        if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
-                        {
-                            Mouse_tap_AddedCart(item);
-                        }
-                    }
-                    if (Maincat == "AVCS Folio")
-                    {
-                        if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
-                        {
-                            Mouse_tap_AddedCart(item);
-                        }
-                    }
-                    if (Maincat == "Digital List of Lights")
-                    {
-                        if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADLL"))
-                        {
-                            Mouse_tap_AddedCart(item);
-                        }
-                    }
-                    if (Maincat == "Digital List of Radio Signals")
-                    {
-                        if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADRS"))
-                        {
-                            Mouse_tap_AddedCart(item);
-                        }
-                    }
-                    if (Maincat == "e-NP Sailing Direction")
-                    {
-                        if (checkout.Any(x => x.ShortName == aa && x.ProductName == "e-Nautical Publications"))
-                        {
-                            Mouse_tap_AddedCart(item);
-                        }
-                    }
-                    if (Maincat == "TotalTide")
-                    {
-                        if (checkout.Any(x => x.ShortName == aa && x.ProductName == "TotalTide"))
-                        {
-                            Mouse_tap_AddedCart(item);
-                        }
-                    }
-                }
+                MessageBox.Show(ex.Message, "Information", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
         private void mouseWheel_Changed(object sender, MouseWheelEventArgs e)
@@ -1498,6 +1605,10 @@ namespace EWLDitital.PresentationLayer.Views
         {
             ShowHideMenu("sbHideRightRoute", btnLeftMenuShow, pnlRightRoute);
         }
+        private void btnRoutehide_Click1(object sender, RoutedEventArgs e)
+        {
+            ShowHideMenu("sbHideRightRoute", btnLeftMenuShow, pnlRightRoute1);
+        }
         private void ShowHideMenu(string Storyboard, Button btnShow, StackPanel pnl)
         {
             Storyboard sb = Resources[Storyboard] as Storyboard;
@@ -1668,7 +1779,14 @@ namespace EWLDitital.PresentationLayer.Views
                     {
                         transit_Graphic.IsVisible = false;
                     }
-
+                    if (crew.Contains("Port"))
+                    {
+                        port_Graphic.IsVisible = true;
+                    }
+                    else
+                    {
+                        port_Graphic.IsVisible = false;
+                    }
                 }
 
                 if (Maincat == "Digital List of Radio Signals")
@@ -1726,7 +1844,7 @@ namespace EWLDitital.PresentationLayer.Views
                     LoadingAdorner.IsAdornerVisible = true;
                 }
                 await Task.Delay(2000);
-                RemoveHeilight();
+                
                 CheckBox chk = (CheckBox)sender;
 
                 string chkname = chk.Content.ToString();
@@ -1788,7 +1906,6 @@ namespace EWLDitital.PresentationLayer.Views
                     dataGrid1.Columns[0].Visibility = Visibility.Visible;
                
 
-
                     if (crew.Contains("Overview"))
                     {
                         overviewoverlay.IsVisible = true;
@@ -1797,7 +1914,47 @@ namespace EWLDitital.PresentationLayer.Views
                     {
                         overviewoverlay.IsVisible = false;
                     }
+                    if (crew.Contains("General"))
+                    {
+                        generaloverlay.IsVisible = true;
+                    }
+                    else
+                    {
+                        generaloverlay.IsVisible = false;
+                    }
+                    if (crew.Contains("Coastal"))
+                    {
+                        coastaloverlay.IsVisible = true;
+                    }
+                    else
+                    {
+                        coastaloverlay.IsVisible = false;
+                    }
+                    if (crew.Contains("Approach"))
+                    {
+                        approachoverlay.IsVisible = true;
+                    }
+                    else
+                    {
+                        approachoverlay.IsVisible = false;
+                    }
+                    if (crew.Contains("Harbour"))
+                    {
+                        harbouroverlay.IsVisible = true;
+                    }
+                    else
+                    {
+                        harbouroverlay.IsVisible = false;
+                    }
 
+                    if (crew.Contains("Berthing"))
+                    {
+                        berthingoverlay.IsVisible = true;
+                    }
+                    else
+                    {
+                        berthingoverlay.IsVisible = false;
+                    }
 
                     string s2 = crew.Replace("Overview", "1").Replace("General", "2").Replace("General", "2").Replace("Coastal", "3").Replace("Approach", "4").Replace("Harbour", "5").Replace("Berthing", "6");
                     string s3 = s2.TrimEnd(',');
@@ -1883,7 +2040,7 @@ namespace EWLDitital.PresentationLayer.Views
                     }
                    
                 }
-
+                RemoveHeilight();
                 LoadingAdorner.IsAdornerVisible = false;
             }
             catch (Exception ex)
@@ -1899,7 +2056,7 @@ namespace EWLDitital.PresentationLayer.Views
                 LoadingAdorner.IsAdornerVisible = true;
             }
             await Task.Delay(3000);
-            RemoveHeilight();
+           
             cart.Clear();
             cart1.Clear();
             dataGrid1.ItemsSource = null;
@@ -1974,6 +2131,47 @@ namespace EWLDitital.PresentationLayer.Views
                 {
                     overviewoverlay.IsVisible = false;
                 }
+                if (crew.Contains("General"))
+                {
+                    generaloverlay.IsVisible = true;
+                }
+                else
+                {
+                    generaloverlay.IsVisible = false;
+                }
+                if (crew.Contains("Coastal"))
+                {
+                    coastaloverlay.IsVisible = true;
+                }
+                else
+                {
+                    coastaloverlay.IsVisible = false;
+                }
+                if (crew.Contains("Approach"))
+                {
+                    approachoverlay.IsVisible = true;
+                }
+                else
+                {
+                    approachoverlay.IsVisible = false;
+                }
+                if (crew.Contains("Harbour"))
+                {
+                    harbouroverlay.IsVisible = true;
+                }
+                else
+                {
+                    harbouroverlay.IsVisible = false;
+                }
+
+                if (crew.Contains("Berthing"))
+                {
+                    berthingoverlay.IsVisible = true;
+                }
+                else
+                {
+                    berthingoverlay.IsVisible = false;
+                }
             }
             else
             {
@@ -2006,6 +2204,14 @@ namespace EWLDitital.PresentationLayer.Views
                 {
                     region_Graphic.IsVisible = true;
                 }
+                if (crew.Contains("Port"))
+                {
+                    port_Graphic.IsVisible = true;
+                }
+                else
+                {
+                    port_Graphic.IsVisible = false;
+                }
             }
             else
             {
@@ -2033,15 +2239,26 @@ namespace EWLDitital.PresentationLayer.Views
                 {
                     ADRS2_Graphic.IsVisible = true;
                 }
+                else
+                {
+                    ADRS2_Graphic.IsVisible = false;
+                }
 
                 if (crew.Contains("ADRS2"))
                 {
                     ADRS1345_Graphic.IsVisible = true;
                 }
-
+                else
+                {
+                    ADRS1345_Graphic.IsVisible = false;
+                }
                 if (crew.Contains("ADRS6"))
                 {
                     ADRS6_Graphic.IsVisible = true;
+                }
+                else
+                {
+                    ADRS6_Graphic.IsVisible = false;
                 }
             }
             else
@@ -2441,7 +2658,7 @@ namespace EWLDitital.PresentationLayer.Views
                 totaltide_Graphic.ClearSelection();
                 totaltide_Graphic.IsVisible = false;
             }
-           
+            RemoveHeilight();
             LoadingAdorner.IsAdornerVisible = false;
         }
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
@@ -2645,13 +2862,73 @@ namespace EWLDitital.PresentationLayer.Views
             try
             {
                 ShoppingCart row = (ShoppingCart)((Button)e.Source).DataContext;
-                var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName);
-                if (itemToRemove != null)
+                if (Maincat == "AVCS Chart")
                 {
-                    cart.Remove(itemToRemove);
-                    objMgr.DeleteShoppingCartByProduct(itemToRemove.ShortName);
-                    checkout.Remove(itemToRemove);
+                    var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName && r.ProductName == "AVCS Products");
+                    if (itemToRemove != null)
+                    {
+                        cart.Remove(itemToRemove);
+                        objMgr.DeleteShoppingCartByProduct(itemToRemove.ProductName, itemToRemove.ShortName);
+                        checkout.Remove(itemToRemove);
+                    }
                 }
+                if (Maincat == "AVCS Folio")
+                {
+                    var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName && r.ProductName == "AVCS Products");
+                    if (itemToRemove != null)
+                    {
+                        cart.Remove(itemToRemove);
+                        objMgr.DeleteShoppingCartByProduct(itemToRemove.ProductName, itemToRemove.ShortName);
+                        checkout.Remove(itemToRemove);
+                    }
+                }
+                if (Maincat == "Digital List of Lights")
+                {
+                    var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName && r.ProductName == "ADLL");
+                    if (itemToRemove != null)
+                    {
+                        cart.Remove(itemToRemove);
+                        objMgr.DeleteShoppingCartByProduct(itemToRemove.ProductName, itemToRemove.ShortName);
+                        checkout.Remove(itemToRemove);
+                    }
+                }
+
+                if (Maincat == "Digital List of Radio Signals")
+                {
+                    var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName && r.ProductName == "ADRS");
+                    if (itemToRemove != null)
+                    {
+                        cart.Remove(itemToRemove);
+                        objMgr.DeleteShoppingCartByProduct(itemToRemove.ProductName, itemToRemove.ShortName);
+                        checkout.Remove(itemToRemove);
+                    }
+                }
+
+                if (Maincat == "e-NP Sailing Direction")
+                {
+                    var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName && r.ProductName == "e-Nautical Publications");
+                    if (itemToRemove != null)
+                    {
+                        cart.Remove(itemToRemove);
+                        objMgr.DeleteShoppingCartByProduct(itemToRemove.ProductName, itemToRemove.ShortName);
+                        checkout.Remove(itemToRemove);
+                    }
+                }
+
+                if (Maincat == "TotalTide")
+                {
+                    var itemToRemove = cart.FirstOrDefault(r => r.ShortName == row.ShortName && r.ProductName == "TotalTide");
+                    if (itemToRemove != null)
+                    {
+                        cart.Remove(itemToRemove);
+                         objMgr.DeleteShoppingCartByProduct(itemToRemove.ProductName, itemToRemove.ShortName);
+                        checkout.Remove(itemToRemove);
+                    }
+                }
+                
+
+
+
                 dataGrid1.ItemsSource = null;
                 dataGrid1.ItemsSource = cart.OrderByDescending(f => f.Id); ;
 
@@ -2704,7 +2981,7 @@ namespace EWLDitital.PresentationLayer.Views
                 if (itemToRemove != null)
                 {
                     cart1.Remove(itemToRemove);
-                    objMgr.DeleteShoppingCartByProduct(itemToRemove.FProductId);
+                    objMgr.DeleteShoppingCartByShortname(itemToRemove.FProductId);
                    // checkout.Remove(itemToRemove);
                 }
                 dataGrid2.ItemsSource = null;
@@ -2738,27 +3015,6 @@ namespace EWLDitital.PresentationLayer.Views
 
             }
         }
-        static Esri.ArcGISRuntime.Geometry.PointCollection  Mapcoordinates_Aftertransform_PointCollection(Esri.ArcGISRuntime.Geometry.PointCollection pointcollection)
-        {
-            Esri.ArcGISRuntime.Geometry.PointCollection _pointcollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-            try
-            {
-                foreach (var se in pointcollection)
-                {
-                    double x = se.X;
-                    double y = se.Y;
-                    MapPoint Point1 = new MapPoint(x, y, SpatialReferences.WebMercator);
-                    MapPoint afterPoint1 = (MapPoint)GeometryEngine.Project(Point1, SpatialReference.Create(4326));
-                    _pointcollection.Add(afterPoint1);
-                }
-                return _pointcollection;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-                return _pointcollection;
-            }
-        }
         static List<MapPoint> Mapcoordinates_Aftertransform(IReadOnlyList<MapPoint> _mappoint)
         {
             List<MapPoint> polypts = new List<MapPoint>();
@@ -2781,64 +3037,6 @@ namespace EWLDitital.PresentationLayer.Views
             }
         }
 
-        private void mylistbox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                string str = null;
-
-                if (mylistbox.SelectedIndex < 0)
-                {
-                    return;
-                }
-
-                str = (mylistbox.SelectedItem as ListBoxItem).Content.ToString();
-                
-
-                if (mylistbox.Items.Count > 1)
-                {
-                    List<GraphicsOverlay> graphicoverlaycollection = new List<GraphicsOverlay>();
-                    var ter = MyMapView.GraphicsOverlays;
-                    foreach (var items in ter)
-                    {
-                        graphicoverlaycollection.Add(items);
-                    }
-
-                    foreach (var items in graphicoverlaycollection)
-                    {
-                        foreach (var item1 in items.Graphics)
-                        {
-                            string named = item1.Attributes.Keys.FirstOrDefault();
-                            if (mylistbox.Items.Cast<ListBoxItem>().Any(x => x.Content.ToString() == named) && !cart.Any(x => x.ShortName == named) && !cart1.Any(x => x.FProductId == named))
-                            {
-                                if (!item1.IsSelected)
-                                {
-                                    if (str == named)
-                                    {
-                                        item1.IsSelected = true;
-                                        Rightpanel_polygon_selection(item1);
-                                    }
-                                }
-                                else
-                                {
-                                    if (str == named)
-                                    {
-                                        item1.IsSelected = false;
-                                        Mouse_Tap_Unselect(item1);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                e.Handled = false;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
         private void mylistbox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
 
@@ -2863,7 +3061,7 @@ namespace EWLDitital.PresentationLayer.Views
                     var ter = MyMapView.GraphicsOverlays;
                     foreach (var items in ter)
                     {
-                        if (items.Id != "seven" && items.Id != "Portoverlay" && items.Id != "greenPortoverlay" && items.Id != "redPortoverlay")
+                        if (items.Id != "seven" && items.Id != "Portoverlay" && items.Id != "greenPortoverlay" && items.Id != "redPortoverlay" && items.Id != "17" && items.Id != "_sketchRectOverlay")
                         {
                             graphicoverlaycollection.Add(items);
                         }
@@ -2964,22 +3162,26 @@ namespace EWLDitital.PresentationLayer.Views
 
                                         }
 
-
+                                        sd = sd.TrimEnd(',');
                                         foreach (var ter1 in ter)
                                         {
-                                            foreach (var item2 in ter1.Graphics)
+                                            if (ter1.Id != "seven" && ter1.Id != "Portoverlay" && ter1.Id != "greenPortoverlay" && ter1.Id != "redPortoverlay" && ter1.Id != "17" && ter1.Id != "_sketchRectOverlay")
                                             {
-                                                var sub = item2.Attributes.Keys.FirstOrDefault();
-                                                if (sd.Contains(sub))
+                                                foreach (var item2 in ter1.Graphics)
                                                 {
-                                                    if (item2.Attributes["ShortName"] != null)
+
+                                                    var sub = item2.Attributes.Keys.FirstOrDefault();
+                                                    if (sd.Contains(sub))
                                                     {
-                                                        CartDetails.Add(new TemperaturesDetails()
+                                                        if (item2.Attributes["ShortName"] != null)
                                                         {
-                                                            ProductId = item2.Attributes["ShortName"].ToString(),
-                                                            Title = item2.Attributes["title"].ToString(),
-                                                            Band = objcont.Band(item2.Attributes["Usage"].ToString())
-                                                        });
+                                                            CartDetails.Add(new TemperaturesDetails()
+                                                            {
+                                                                ProductId = item2.Attributes["ShortName"].ToString(),
+                                                                Title = item2.Attributes["title"].ToString(),
+                                                                Band = objcont.Band(item2.Attributes["Usage"].ToString())
+                                                            });
+                                                        }
                                                     }
                                                 }
                                             }
@@ -3075,21 +3277,7 @@ namespace EWLDitital.PresentationLayer.Views
             mylistbox.Items.Clear();
             Storyboard sb = Resources["sbHideRightMenu"] as Storyboard;
             sb.Begin(pnlRightMenu);
-            foreach (var item in MyMapView.GraphicsOverlays)
-            {
-                item.ClearSelection();
-                clearButton_GraphicSelction(item.Graphics);
-                foreach (var item3 in item.Graphics)
-                {
-                    var aa = item3.Attributes.Keys.FirstOrDefault();
-                    if (checkout.Any(x => x.ShortName == aa))
-                    {
-                        Mouse_tap_AddedCart(item3);
-                    }
-                }
-
-
-            }
+           
             //twogrp.Clear();
             lstSelectedEmpNo.Clear();
             dataGrid1.ItemsSource = null;
@@ -3099,6 +3287,7 @@ namespace EWLDitital.PresentationLayer.Views
 
             stopgraphiclin.Clear();
             mylistbox.Items.Clear();
+            RemoveHeilight();
 
         }
         PolylineBuilder loadedpolylinebuilder = null;
@@ -3136,10 +3325,11 @@ namespace EWLDitital.PresentationLayer.Views
 
                         var roadPolyline = pointline as Esri.ArcGISRuntime.Geometry.Polyline;
                         // var roadPolyline = graphic.Geometry as Esri.ArcGISRuntime.Geometry.Polyline;
+                        Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(roadPolyline, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
                         this.polylineBuilder = new PolylineBuilder(roadPolyline);
                         if (polylineBuilder.Parts.Count > 1)
                         {
-                            var item = coordinatesystem_polyline_new(pointline);
+                            var item = coordinatesystem_polyline_new(pathGeometry1);
                             foreach (var item1 in item)
                             {
                                 var ge = Graphiccoordinates_Aftertransform(item1);
@@ -3149,7 +3339,7 @@ namespace EWLDitital.PresentationLayer.Views
                         }
                         else
                         {
-                            var loadedgraphic = coordinatesystem_polyline(pointline);
+                            var loadedgraphic = coordinatesystem_polyline(pathGeometry1);
                             var ge = Graphiccoordinates_Aftertransform(loadedgraphic);
                             var graphic = new Graphic(ge);
                             Geometry_OnviewTap(graphic);
@@ -3167,9 +3357,8 @@ namespace EWLDitital.PresentationLayer.Views
                         Geometry_OnviewTap(graphic1);
 
                     }
-                    
                 }
-                else if (symbolspointslist_savebtn.Count>1)
+                else if (symbolspointslist_savebtn.Count > 1)
                 {
                     Polyline routeLine = new Polyline(symbolspointslist_savebtn);
                     Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
@@ -3179,43 +3368,45 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 else
                 {
-                    DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
-                    DataTable dt = new DataTable();
-                    dt = objRout.GetRouteLineDetails(SelectedRoutName);
-                    Esri.ArcGISRuntime.Geometry.PointCollection pointcollection_load = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-                    List<MapPoint> loadpointlist = new List<MapPoint>();
-                    for (int i = 0; i < dt.Rows.Count; i++)
+                    if (SelectedRoutName !="")
                     {
-                        var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
-                        var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
-                        MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
-                        pointcollection_load.Add(latit, longit);
-                        loadpointlist.Add(mp1);
-                    }
-
-                    var l1 = loadrouteline_create(pointcollection_load);
-                    var loadedpolyline = l1 as Polyline;
-                    this.loadedpolylinebuilder = new PolylineBuilder(loadedpolyline);
-                    var item2geom = loadrouteline_geom_create_new(pointcollection_load);
-
-                    if (loadedpolylinebuilder.Parts.Count > 1)
-                    {
-                        var tempgraphic = coordinatesystem_polyline_new(l1);
-                        foreach (var item in tempgraphic)
+                        DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
+                        DataTable dt = new DataTable();
+                        dt = objRout.GetRouteLineDetails(SelectedRoutName);
+                        Esri.ArcGISRuntime.Geometry.PointCollection pointcollection_load = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+                        List<MapPoint> loadpointlist = new List<MapPoint>();
+                        for (int i = 0; i < dt.Rows.Count; i++)
                         {
-                            var ge = Graphiccoordinates_Aftertransform(item);
-                            var graphic = new Graphic(ge);
-                            Geometry_OnviewTap(graphic);
-                            // Geometry_OnviewTap(item);
+                            var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                            var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+                            MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
+                            pointcollection_load.Add(latit, longit);
+                            loadpointlist.Add(mp1);
+                        }
+
+                        var l1 = loadrouteline_create(pointcollection_load);
+                        var loadedpolyline = l1 as Polyline;
+                        this.loadedpolylinebuilder = new PolylineBuilder(loadedpolyline);
+                        var item2geom = loadrouteline_geom_create_new(pointcollection_load);
+                        Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(loadedpolyline, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
+                        if (loadedpolylinebuilder.Parts.Count > 1)
+                        {
+                            var tempgraphic = coordinatesystem_polyline_new(pathGeometry1);
+                            foreach (var item in tempgraphic)
+                            {
+                                var ge = Graphiccoordinates_Aftertransform(item);
+                                var graphic = new Graphic(ge);
+                                Geometry_OnviewTap(graphic);
+                                // Geometry_OnviewTap(item);
+                            }
+                        }
+                        else
+                        {
+                            var grap = coordinatesystem_polyline(pathGeometry1);
+                            Geometry_OnviewTap(grap);
+
                         }
                     }
-                    else
-                    {
-                        var grap = coordinatesystem_polyline(l1);
-                        Geometry_OnviewTap(grap);
-
-                    }
-
                 }
             }
             catch (Exception ex)
@@ -3448,30 +3639,6 @@ namespace EWLDitital.PresentationLayer.Views
                 return null;
             }
         }
-        private void MyMapView_MouseMove(object sender, GeoViewInputEventArgs geoViewInputEventArgs)
-        {
-            try
-            {
-                if (geoViewInputEventArgs.Position != null)
-                {
-                    if (MyMapView.GetCurrentViewpoint(ViewpointType.BoundingGeometry) == null)
-                        return;
-
-                    System.Windows.Point screenPoint = geoViewInputEventArgs.Position;
-
-                    MapPoint mapPoint = MyMapView.ScreenToLocation(screenPoint);
-                    MapPoint aftertransform = Mapcoordinates_Change(mapPoint);
-                    if (MyMapView.IsWrapAroundEnabled)
-                        aftertransform = GeometryEngine.NormalizeCentralMeridian(aftertransform) as MapPoint;
-
-                    mylblClickCount.Content = CoordinateFormatter.ToLatitudeLongitude(aftertransform, LatitudeLongitudeFormat.DegreesDecimalMinutes, 4);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
         private void MapView_MouseMoved(object sender, MouseEventArgs e)
         {
             try
@@ -3491,51 +3658,6 @@ namespace EWLDitital.PresentationLayer.Views
                 MessageBox.Show(ex.Message);
             }
         }
-        private async void route_symbolsadding_pointcollection(Esri.ArcGISRuntime.Geometry.PointCollection geodesic_points)
-        {
-            try
-            {
-
-                foreach (var tem in geodesic_points)
-                {
-                    polist.polylinepointcollection = null;
-                    switch (SampleState.AddingStops)
-                    {
-                        case SampleState.AddingStops:
-                            // Get the name of this stmop.
-                            string stopName = $"W{routewaypointoverlay.Graphics.Count + 1 }";
-                            // polist.WaypointCount = _sketchRouteOverlay.Graphics.Count + 1;
-                            // Create the marker to show underneath the stop number.
-                            PictureMarkerSymbol pushpinMarker = await GetPictureMarker();
-
-                            polist.latitude = tem.X;
-                            polist.longitude = tem.Y;
-
-
-                            TextSymbol stopSymbol = new TextSymbol(stopName, System.Drawing.Color.Transparent, 15,
-                                Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Right, Esri.ArcGISRuntime.Symbology.VerticalAlignment.Top);
-                            stopSymbol.OffsetY = 0;
-
-                            CompositeSymbol combinedSymbol = new CompositeSymbol(new MarkerSymbol[] { pushpinMarker, stopSymbol });
-
-                            Graphic stopGraphic = new Graphic(tem, combinedSymbol);
-                            // Graphic stopGraphic = new Graphic(tem);
-                            stopGraphic.Attributes["ShortName"] = stopName;
-                            routewaypointoverlay.Graphics.Add(stopGraphic);
-                            break;
-                    }
-
-                }
-            }
-            catch
-            {
-
-            }
-            // Normalize geometry - important for geometries that will be sent to a server for processing.
-            //mapLocation = (MapPoint)GeometryEngine.NormalizeCentralMeridian(mapLocation);
-            // var ste = Mapcoordinates_Change(mapLocation);
-        }
-
         private async void route_symbolsadding(IReadOnlyList<MapPoint> mp)
         {
             try
@@ -3580,761 +3702,14 @@ namespace EWLDitital.PresentationLayer.Views
             //mapLocation = (MapPoint)GeometryEngine.NormalizeCentralMeridian(mapLocation);
             // var ste = Mapcoordinates_Change(mapLocation);
         }
-        List<MapPoint> symbolspointslist_savebtn = new List<MapPoint>();
-        Esri.ArcGISRuntime.Geometry.PointCollection geodesic_points = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-        Esri.ArcGISRuntime.Geometry.PointCollection geodesic_savbtnpoints_webmerccollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-        private async void geodetic_line(object sender, RoutedEventArgs e)
-        {
-            _sketchOverlay.Graphics.Clear();
-            routewaypointoverlay.Graphics.Clear();
-
-            geodesic_points.Clear();
-
-           
-
-            Mouse.OverrideCursor = Cursors.Cross;
-            savemenu.IsEnabled = true;
-            MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-            // Add a graphic at JFK to serve as the origin.
-            MyMapView.GeoViewTapped += MyMapViewOnGeoViewTapped;
-            
-          //  Mouse.OverrideCursor = Cursors.Arrow;
-        }
-
-      
-        private void MyMapViewOnGeoViewTapped(object sender, GeoViewInputEventArgs geoViewInputEventArgs)
-        {
-          
-            MapPoint start = new MapPoint(geoViewInputEventArgs.Location.X, geoViewInputEventArgs.Location.Y, SpatialReferences.WebMercator);
-            SimpleMarkerSymbol startMarker = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, System.Drawing.Color.Blue, 10);
-            var start_transform = (MapPoint)GeometryEngine.Project(start, SpatialReference.Create(4326));
-            var start_graphic = new Graphic(start_transform, startMarker);
-            _sketchOverlay.Graphics.Add(start_graphic);
-
-            geodesic_points.Add(start_transform);
-            symbolspointslist_savebtn.Add(start_transform);
-            geodesic_savbtnpoints_webmerccollection.Add(start);
-
-            if (geodesic_points.Count > 1)
-            {
-                Polyline routeLine1 = new Polyline(geodesic_points);
-                GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesic_points.ElementAt(0), geodesic_points.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
-                GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesic_points.ElementAt(0), geodesic_points.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
-                var loxdres = Math.Round(loxodromeMeasureResult.Distance, 3);
-                var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 3);
-
-                if (loxodromeMeasureResult.Distance <= 400)
-                {
-                    Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
-                    var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                    var pathgraphic = new Graphic(pathGeometry1, linesym);
-                    pathgraphic.Attributes["ShortName"] = loxdres.ToString()+" "+"Kn";
-                   // pathgraphic.Attributes["ShortName_"] = loxodromeMeasureResult.AzimuthUnit.ToString() + " " + "T";
-                    //routewaypointoverlay.Graphics.Add(pathgraphic);
-                    _sketchOverlay.Graphics.Add(pathgraphic);
-                    route_symbolsadding_pointcollection(geodesic_points);
-                    geodesic_points.RemoveAt(0);
-                   // symbolspointslist.RemoveAt(0);
-                }
-                else
-                {
-                    // Densify the polyline to show the geodesic curve.
-                    Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
-                    var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                    var pathgraphic = new Graphic(pathGeometry1, linesym);
-                    pathgraphic.Attributes["ShortName"] = loxdres1.ToString() + " " + "Kn";
-                   // pathgraphic.Attributes["ShortName_"] = loxodromeMeasureResult1.AzimuthUnit.ToString() + " " + "T";
-                    // routewaypointoverlay.Graphics.Add(pathgraphic);
-                    _sketchOverlay.Graphics.Add(pathgraphic);
-                    route_symbolsadding_pointcollection(geodesic_points);
-                    geodesic_points.RemoveAt(0);
-                   // symbolspointslist.RemoveAt(0);
-                }
-               
-            }
-            
-        }
-       
-        private void Geodetic_RouteGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            routewaypointoverlay.Graphics.Clear();
-            _sketchOverlay.Graphics.Clear();
-            symbolspointslist_savebtn.Clear();
-            List<MapPoint> geodeticloadpoints = new List<MapPoint>();
-            Esri.ArcGISRuntime.Geometry.PointCollection geodeticPointCollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
-
-
-            if (e.AddedItems != null && e.AddedItems.Count > 0)
-            {
-                string aa = (RouteGrid.SelectedItem as DataRowView).Row["RouteName"].ToString();
-                SelectedRoutName = aa;
-                lstSelectedRoute.Add(aa);
-                DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
-                DataTable dt = new DataTable();
-                dt = objCart.GetRouteLineDetails(aa);
-                foreach (DataRow row1 in dt.Rows)
-                {
-                    polist.latitude = Convert.ToDouble(row1["Latitude"]);
-                    polist.longitude = Convert.ToDouble(row1["Longitude"]);
-
-                    MapPoint mp = new MapPoint(polist.latitude, polist.longitude, SpatialReferences.WebMercator);
-
-                    geodeticPointCollection.Add(mp);
-                    geodeticloadpoints.Add(mp);
-
-                }
-            }
-            for (int i = 0; i < geodeticPointCollection.Count; i++)
-            {
-                if (i + 1 == geodeticPointCollection.Count + 1)
-                {
-
-                    break;
-
-                }
-                else
-                {
-                    MapPoint loadstartpoint = new MapPoint(geodeticPointCollection[i].X, geodeticPointCollection[i].Y, SpatialReferences.WebMercator);
-                    var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
-                    geodesicload_pointlist.Add(start_transform);
-
-                   
-
-                    if (geodesicload_pointlist.Count > 1)
-                    {
-                        GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
-                        GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
-                        var loxdres =   Math.Round( loxodromeMeasureResult.Distance,3);
-                        var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 3);
-                        if (loxodromeMeasureResult.Distance <= 400)
-                        {
-                            Polyline routeLine2 = new Polyline(geodesicload_pointlist);
-                            // Densify the polyline to show the geodesic curve.
-                            Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
-                            var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                            var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
-                            _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "Kn";
-                            _sketchOverlay.Graphics.Add(_pathGraphic1);
-                            // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                           //  route_symbolsadding(geodesicload_pointlist);
-                            // builder.AddPart(geodesicpointlist);
-                            geodesicload_pointlist.RemoveAt(0);
-
-                        }
-                        else
-                        {
-                            Polyline routeLine2 = new Polyline(geodesicload_pointlist);
-                            // Densify the polyline to show the geodesic curve.
-                            Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
-                            var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                            var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
-                            _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "Kn";
-                            _sketchOverlay.Graphics.Add(_pathGraphic2);
-                            // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                            // route_symbolsadding(geodesicload_pointlist);
-                            // builder.AddPart(geodesicpointlist);
-                            geodesicload_pointlist.RemoveAt(0);
-                        }
-                        //Polyline routeLine1 = new Polyline(geodesicload_pointlist);
-                        //Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
-                       // var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                       // var graphic_new = new Graphic(pathGeometry1, polys3);
-                       // _sketchOverlay.Graphics.Add(graphic_new);
-                       // geodesicload_pointlist.RemoveAt(0);
-                    }
-                    //route_symbolsadding_pointcollection(geodeticPointCollection);
-                    //var x1 = borderCountryPointCollection[i].X;
-                    //var x2 = borderCountryPointCollection[i+1].X;
-
-                }
-
-
-            }
-            route_symbolsadding(geodeticloadpoints);
-            //  geom = loadrout
-
-        }
-        private async void Geodetic_EditRoot_Click(object sender, RoutedEventArgs e)
-        {
-            // densifyandgeneralize();
-            if (SelectedRoutName == "" && importedlinepoints.Count > 0)
-            {
-                try
-                {
-                    savemenu.IsEnabled = true;
-                    _sketchOverlay.Graphics.Clear();
-                    routewaypointoverlay.Graphics.Clear();
-                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-
-                    Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-
-                    for (int i = 0; i < importedlinepoints.Count; i++)
-                    {
-                        if (i + 1 == importedlinepoints.Count + 1)
-                        {
-
-                            break;
-
-                        }
-                        else
-                        {
-                            // var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
-                            // var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
-                           // MapPoint mp2 = importedlinepoints[i];
-                            MapPoint mp1 = new MapPoint(importedlinepoints[i].X,importedlinepoints[i].Y, SpatialReferences.Wgs84);
-                            MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(3857));
-                            geodetcipointcollection_webmerc.Add(mp1_aftertransfor);
-                        }
-                    }
-
-                    var l1 = loadrouteline_create(normalizedimportedpoints);
-                    var editPolyline1 = l1 as Polyline;
-                    this.editlinebuilder = new PolylineBuilder(editPolyline1);
-                    var item2geom = loadrouteline_geom_create_new(normalizedimportedpoints);
-                    var editPolyline2 = item2geom as Polyline;//add this
-
-                    if (editlinebuilder.Parts.Count > 1)
-                    {
-
-                        var config = new SketchEditConfiguration()
-                        {
-                            AllowVertexEditing = true,
-                            AllowMove = true,
-                            AllowRotate = false,
-
-                            ResizeMode = SketchResizeMode.None
-                        };
-                        sketchEditor();
-                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline2);
-                    }
-                    else
-                    {
-                        var config = new SketchEditConfiguration()
-                        {
-                            AllowVertexEditing = true,
-                            AllowMove = true,
-                            AllowRotate = false,
-
-                            ResizeMode = SketchResizeMode.None
-                        };
-                        sketchEditor();
-                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline1);// add this
-
-                    }
-
-
-                   // var l2 = loadrouteline_create(importedlinepoints);
-                   // var editPolyline3 = l1 as Polyline;
-                   // this.editlinebuilder = new PolylineBuilder(editPolyline1);
-
-                   
-
-                   // var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
-                   // Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
-
-                    // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
-                   
-                }
-                catch (TaskCanceledException)
-                {
-                    // Ignore ... let the user cancel editing
-                }
-
-            }
-            else
-            {
-
-
-                try
-                {
-                    savemenu.IsEnabled = true;
-                    _sketchOverlay.Graphics.Clear();
-                    routewaypointoverlay.Graphics.Clear();
-                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-
-                    Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-
-                    DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
-                    DataTable dt = new DataTable();
-                    dt = objRout.GetRouteLineDetails(SelectedRoutName);
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        if (i + 1 == dt.Rows.Count + 1)
-                        {
-
-                            break;
-
-                        }
-                        else
-                        {
-                            var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
-                            var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
-                            MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
-                            //MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(4326));
-                            geodetcipointcollection_webmerc.Add(mp1);
-                        }
-                    }
-
-                    var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
-                    Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
-
-                    // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
-                    var config = new SketchEditConfiguration()
-                    {
-                        AllowVertexEditing = true,
-                        AllowMove = true,
-                        AllowRotate = false,
-
-                        ResizeMode = SketchResizeMode.None
-                    };
-                    sketchEditor();
-                    Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(geom1);
-                }
-                catch (TaskCanceledException)
-                {
-                    // Ignore ... let the user cancel editing
-                }
-            }
-
-            
-
-
-        }
-            
-            
-        PolylineBuilder builder = new PolylineBuilder(SpatialReferences.Wgs84);
-       
-        private void btnSaveGeodetic_Click(object sender, RoutedEventArgs e)
-        {
-            _sketchOverlay.Graphics.Clear();
-            routewaypointoverlay.Graphics.Clear();
-            IReadOnlyList<MapPoint> geodroutepoints = null;
-            List<MapPoint> geodroutelinepoints = new List<MapPoint>();
-            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
-
-            Polyline routeLine = new Polyline(geodesic_savbtnpoints_webmerccollection);
-            var temproutegeom = MyMapView.SketchEditor.Geometry;
-            RouteManager objRout = new RouteManager();
-            var geodroutgeom = routeLine as Esri.ArcGISRuntime.Geometry.Polyline;
-            this.builder = new PolylineBuilder(geodroutgeom);
-
-            if (builder.Parts.Count > 0 && temproutegeom == null)
-            {
-                Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
-                var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                foreach (var r in builder.Parts)
-                {
-                    geodroutepoints = r.Points;
-                    // geodroutelinepoints = Mapcoordinates_Aftertransform(geodesicpointlist_copy);
-                    waypointcount = r.PointCount;
-                }
-                DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
-                DataTable dt = new DataTable();
-                dt = objCart.GetRouteLineDetails(txtRouteName.Text);
-                if (dt.Rows.Count > 0)
-                {
-                    MessageBoxResult result = MessageBox.Show("Route Name Already Exists Do you want to Override", "Information", MessageBoxButton.YesNo, MessageBoxImage.Exclamation);
-
-                    if (MessageBoxResult.Yes == result)
-                    {
-
-                        objMgr.DeleteRouteLineDetailsByName(txtRouteName.Text.Trim());
-                        objMgr.DeleteRouteLineByName(txtRouteName.Text.Trim());
-                        int count = 0;
-                        int result1 = objRout.InsertRoute(txtRouteName.Text, waypointcount);
-                        if (result1 > 0)
-                        {
-                            if (importedlinepoints.Count > 1)//to reset that exisiting imported points
-                            {
-                                importedlinepoints.Clear();
-                                normalizedimportedpoints.Clear();
-                                count++;
-
-                            }
-                            foreach (var ter in geodroutepoints)
-                            {
-                                double lat = ter.X;
-                                double longi = ter.Y;
-                                objRout.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
-                            }
-
-                        }
-                        if (MessageBoxResult.No == result)
-                        {
-                            return;
-                        }
-
-                    }
-
-                }
-                else
-                {
-                    int result1 = objRout.InsertRoute(txtRouteName.Text, waypointcount);
-                    int count = 0;
-                    if (result1 > 0)
-                    {
-                        if (importedlinepoints.Count > 1)
-                        {
-                            importedlinepoints.Clear();
-                            normalizedimportedpoints.Clear();
-                            count++;
-
-                        }
-                        foreach (var ter in geodroutepoints)
-                        {
-                            double lat = ter.X;
-                            double longi = ter.Y;
-                            objRout.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
-                        }
-                    }
-                }
-
-                for (int i = 0; i < geodroutepoints.Count; i++)
-                {
-                    if (i + 1 == geodroutepoints.Count + 1)
-                    {
-
-                        break;
-
-                    }
-                    else
-                    {
-                        MapPoint loadstartpoint = new MapPoint(geodroutepoints[i].X, geodroutepoints[i].Y, SpatialReferences.WebMercator);
-                         var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
-                        geodesicload_pointlist.Add(start_transform);
-
-                        if (geodesicload_pointlist.Count > 1)
-                        {
-                            Polyline routeLine1 = new Polyline(geodesicload_pointlist);
-                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
-                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
-
-                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 3);
-                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 3);
-
-                            if (loxodromeMeasureResult.Distance <= 400)
-                            {
-                                // Densify the polyline to show the geodesic curve.
-                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
-                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
-                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "Kn";
-                                _sketchOverlay.Graphics.Add(_pathGraphic1);
-                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                                // route_symbolsadding(savepointlist_polydraw);
-                                // builder.AddPart(geodesicpointlist);
-                                geodesicload_pointlist.RemoveAt(0);
-
-                            }
-                            else
-                            {
-                                // Densify the polyline to show the geodesic curve.
-                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
-                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
-                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "Kn";
-                                _sketchOverlay.Graphics.Add(_pathGraphic2);
-                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                                // route_symbolsadding(savepointlist_polydraw);
-                                // builder.AddPart(geodesicpointlist);
-                                geodesicload_pointlist.RemoveAt(0);
-                            }
-
-                        }
-
-                    }
-
-                }
-
-                //var graphic_new = new Graphic(pathGeometry1, polys3);
-               // _sketchOverlay.Graphics.Add(graphic_new);
-               // route_symbolsadding(symbolspointslist_savebtn);
-            }
-            else
-            {
-                var routegeom = temproutegeom as Esri.ArcGISRuntime.Geometry.Polyline;
-                this.polybroute = new PolylineBuilder(routegeom);
-                RouteManager objRout1 = new RouteManager();
-                Esri.ArcGISRuntime.Geometry.PointCollection geodetcisavepointlist_wgs84 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-                
-                if (polybroute.Parts.Count > 0)
-                {
-                    foreach (var r in polybroute.Parts)
-                    {
-                        geodroutepoints = r.Points;
-                        geodroutelinepoints = Mapcoordinates_Aftertransform(geodroutepoints);
-                        waypointcount = r.PointCount;
-                    }
-                    DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
-                    DataTable dt = new DataTable();
-                    dt = objCart.GetRouteLineDetails(txtRouteName.Text);
-                    if (dt.Rows.Count > 0)
-                    {
-                        MessageBoxResult result = MessageBox.Show("Route Name Already Exists Do you want to Override", "Information", MessageBoxButton.YesNo, MessageBoxImage.Exclamation);
-
-                        if (MessageBoxResult.Yes == result)
-                        {
-                            objMgr.DeleteRouteLineDetailsByName(txtRouteName.Text.Trim());
-                            objMgr.DeleteRouteLineByName(txtRouteName.Text.Trim());
-                            int result1 = objRout1.InsertRoute(txtRouteName.Text, waypointcount);
-                            if (result1 > 0)
-                            {
-                                foreach (var ter in geodroutepoints)
-                                {
-
-                                    double lat = ter.X;
-                                    double longi = ter.Y;
-
-                                    MapPoint mpt_web = new MapPoint(lat, longi, SpatialReferences.WebMercator);
-                                    MapPoint mpt_wgs84 = (MapPoint)GeometryEngine.Project(mpt_web, SpatialReference.Create(4326));
-                                    geodetcisavepointlist_wgs84.Add(mpt_wgs84);
-                                    objRout1.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
-                                }
-                            }
-
-                        }
-                        if (MessageBoxResult.No == result)
-                        {
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        int result = objRout1.InsertRoute(txtRouteName.Text, waypointcount);
-                        int count = 0;
-                        if (result > 0)
-                        {
-                            if (importedlinepoints.Count > 1)
-                            {
-                                importedlinepoints.Clear();
-                                normalizedimportedpoints.Clear();
-                                count++;
-
-                            }
-                            foreach (var ter in geodroutepoints)
-                            {
-                                double lat = ter.X;
-                                double longi = ter.Y;
-
-                                MapPoint mpt_web = new MapPoint(lat, longi, SpatialReferences.WebMercator);
-                                MapPoint mpt_wgs84 = (MapPoint)GeometryEngine.Project(mpt_web, SpatialReference.Create(4326));
-                                geodetcisavepointlist_wgs84.Add(mpt_wgs84);
-
-
-                                objRout1.InsertRouteDetails(result, lat.ToString(), longi.ToString());
-                            }
-                        }
-                    }
-                }
-               
-
-                for (int i = 0; i < geodetcisavepointlist_wgs84.Count; i++)
-                {
-                    if (i + 1 == geodetcisavepointlist_wgs84.Count + 1)
-                    {
-
-                        break;
-
-                    }
-                    else
-                    {
-                        MapPoint loadstartpoint = new MapPoint(geodetcisavepointlist_wgs84[i].X, geodetcisavepointlist_wgs84[i].Y, SpatialReferences.Wgs84);
-                        // var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
-                        geodesicload_pointlist.Add(loadstartpoint);
-                        
-                        if (geodesicload_pointlist.Count > 1)
-                        {
-                            Polyline routeLine1 = new Polyline(geodesicload_pointlist);
-                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
-                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
-
-                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 3);
-                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 3);
-
-                            if (loxodromeMeasureResult.Distance <= 400)
-                            {
-                                // Densify the polyline to show the geodesic curve.
-                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
-                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
-                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "Kn";
-                                _sketchOverlay.Graphics.Add(_pathGraphic1);
-                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                                // route_symbolsadding(savepointlist_polydraw);
-                                // builder.AddPart(geodesicpointlist);
-                                geodesicload_pointlist.RemoveAt(0);
-
-                            }
-                            else
-                            {
-                                // Densify the polyline to show the geodesic curve.
-                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
-                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
-                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "Kn";
-                                _sketchOverlay.Graphics.Add(_pathGraphic2);
-                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                                // route_symbolsadding(savepointlist_polydraw);
-                                // builder.AddPart(geodesicpointlist);
-                                geodesicload_pointlist.RemoveAt(0);
-                            }
-
-                        }
-
-                    }
-
-                }
-            }
-            route_symbolsadding(geodroutepoints);
-
-
-            completecommand(creationMode);
-
-            e.Handled = true;
-
-            routelineconfigclear();
-            geodesic_points.Clear();
-            geodesic_savbtnpoints_webmerccollection.Clear();
-            savemenu.IsEnabled = false;
-            SaveRouteName.Visibility = Visibility.Hidden;
-
-            SelectedRoutName = txtRouteName.Text;
-            Mouse.OverrideCursor = Cursors.Arrow;
-            MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
-            MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
-
-
-        }
-       
-        Esri.ArcGISRuntime.Geometry.PointCollection Geodetic_normalizedimportedpoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-        Esri.ArcGISRuntime.Geometry.PointCollection importedlinepoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-        private void Geodetc_Import_Click(object sender, RoutedEventArgs e)
-        {
-            _sketchOverlay.Graphics.Clear();
-            importedlinepoints.Clear();
-            normalizedimportedpoints.Clear();
-           // Esri.ArcGISRuntime.Geometry.PointCollection importedlinepoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
-            routewaypointoverlay.Graphics.Clear();
-            SelectedRoutName = "";
-            try
-            {
-                string strfilename = "";
-                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-                // openFileDialog.Filter = "All files (*.*)|*.*";
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    openFileDialog.DefaultExt = ".bsk";
-                    openFileDialog.Filter = "Basket(.bsk)|*.bsk";
-                    strfilename = openFileDialog.FileName;
-                    strfilename = openFileDialog.FileName;
-                }
-
-                XDocument doc1 = XDocument.Load(strfilename);
-                XNamespace ns = "http://www.cirm.org/RTZ/1/0";
-                List<MapPoint> _mappoint = new List<MapPoint>();
-                // Esri.ArcGISRuntime.Geometry.PointCollection importedpoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-                // IReadOnlyList<MapPoint> _mappoint=null;
-                foreach (XElement element in doc1.Root
-                                    .Element(ns + "waypoints")
-                                    .Elements(ns + "waypoint")
-                                    .Elements(ns + "position"))
-                {
-                    Console.WriteLine("Name: {0}; Value: {1}",
-                         (double)element.FirstAttribute,
-                         (double)element.LastAttribute);
-                    MapPoint mpt = new MapPoint((double)element.LastAttribute, (double)element.FirstAttribute);
-                    _mappoint.Add(mpt);
-                    importedlinepoints.Add(mpt);
-                }
-                normalizedimportedpoints = CalcNormalize_latest(_mappoint);
-                //SelectPrdctsunderRoot_Click(_mappoint);
-                //distancemes();
-
-               // Geodetic_normalizedimportedpoints = Mapcoordinates_Aftertransform_PointCollection(importedlinepoints);
-
-
-                for (int i = 0; i < importedlinepoints.Count; i++)
-                {
-                    if (i + 1 == importedlinepoints.Count + 1)
-                    {
-
-                        break;
-
-                    }
-                    else
-                    {
-                        MapPoint loadstartpoint = new MapPoint(importedlinepoints[i].X, importedlinepoints[i].Y, SpatialReferences.Wgs84);
-                        // var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
-                        geodesicload_pointlist.Add(loadstartpoint);
-
-
-
-                        if (geodesicload_pointlist.Count > 1)
-                        {
-                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
-                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
-                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 3);
-                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 3);
-
-                            if (loxodromeMeasureResult.Distance <= 400)
-                            {
-                                Polyline routeLine2 = new Polyline(geodesicload_pointlist);
-                                // Densify the polyline to show the geodesic curve.
-                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
-                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
-                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "Kn";
-                                _sketchOverlay.Graphics.Add(_pathGraphic1);
-                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                                //  route_symbolsadding(geodesicload_pointlist);
-                                // builder.AddPart(geodesicpointlist);
-                                geodesicload_pointlist.RemoveAt(0);
-
-                            }
-                            else
-                            {
-                                Polyline routeLine2 = new Polyline(geodesicload_pointlist);
-                                // Densify the polyline to show the geodesic curve.
-                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
-                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
-                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "Kn";
-                                _sketchOverlay.Graphics.Add(_pathGraphic2);
-                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
-                                // route_symbolsadding(geodesicload_pointlist);
-                                // builder.AddPart(geodesicpointlist);
-                                geodesicload_pointlist.RemoveAt(0);
-                            }
-                           
-                        }
-                       
-
-                    }
-                }
-                route_symbolsadding_pointcollection(importedlinepoints);
-                //route_symbolsadding(_mappoint);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-        private void Undergeodetic_polylineRoot_Click(object sender, RoutedEventArgs e)
-        {
-            Polyline routeLine = new Polyline(symbolspointslist_savebtn);
-            Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
-            var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
-            var graphic1 = new Graphic(pathGeometry1, polys3);
-            Geometry_OnviewTap(graphic1);
-        }
         private async void new_Click(object sender, RoutedEventArgs e)
         {
 
             RemoveHeilight();
             SelectedRoutName = "";
+            Mouse.OverrideCursor = Cursors.Cross;
             MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+            MyMapView.Cursor = Mouse.OverrideCursor = Cursors.Cross;
             _sketchOverlay.Graphics.Clear();
             routewaypointoverlay.Graphics.Clear();
             gridrouteline.Clear();
@@ -4364,6 +3739,7 @@ namespace EWLDitital.PresentationLayer.Views
                 {
                     routeline = coordinatesystem_polyline(geometry);
                 }
+                Mouse.OverrideCursor = Cursors.Arrow;
             }
             catch //(Exception ex)
             {
@@ -4386,18 +3762,20 @@ namespace EWLDitital.PresentationLayer.Views
 
                 if (Maincat == "AVCS Chart")
                 {
-                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults1 = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
 
-                    if (idGraphicOverlayResults.Count == 1)
+                   var idGraphicOverlayResults = idGraphicOverlayResults1.Where(r=>r.GraphicsOverlay.Id != "seven" && r.GraphicsOverlay.Id != "Portoverlay" && r.GraphicsOverlay.Id != "greenPortoverlay" && r.GraphicsOverlay.Id != "redPortoverlay" && r.GraphicsOverlay.Id != "17" &&  r.GraphicsOverlay.Id != "_sketchRectOverlay").Distinct().ToList();
+
+
+                    if (idGraphicOverlayResults.Count() == 1)
                     {
                         var idGraphicResult = idGraphicOverlayResults.FirstOrDefault();
 
                         if (idGraphicResult.Graphics.Count > 1)
                         {
                             mylistbox.Items.Clear();
-                            ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
                             Geometry_OnviewTap(_pointgraph);
-                            pnlRightMenu.Visibility = Visibility.Visible;
+                           
                             return;
                         }
 
@@ -4427,7 +3805,7 @@ namespace EWLDitital.PresentationLayer.Views
                                                 checkout.Remove(itemToRemove1);
                                             }
                                             //Mouse_tap_AddedCart(item3);
-                                            objMgr.DeleteShoppingCartByProduct(shname);
+                                            objMgr.DeleteShoppingCartByProduct("AVCS Products", shname);
                                             //Mouse_Tap_Unselect(item3);
                                         }
                                     }
@@ -4459,7 +3837,7 @@ namespace EWLDitital.PresentationLayer.Views
                                             {
                                                 checkout.Remove(itemToRemove);
                                             }
-                                            objMgr.DeleteShoppingCartByProduct(shname);
+                                            objMgr.DeleteShoppingCartByProduct("AVCS Products", shname);
                                             Mouse_Tap_Unselect(item3);
                                             return;
                                         }
@@ -4513,7 +3891,7 @@ namespace EWLDitital.PresentationLayer.Views
                         }
 
                     }
-                    else if (idGraphicOverlayResults.Count > 1)
+                    else if (idGraphicOverlayResults.Count() > 1)
                     {
                         mylistbox.Items.Clear();
                         ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
@@ -4523,7 +3901,10 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 if (Maincat == "AVCS Folio")
                 {
-                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults1 = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+
+                    var idGraphicOverlayResults = idGraphicOverlayResults1.Where(r => r.GraphicsOverlay.Id != "seven" && r.GraphicsOverlay.Id != "Portoverlay" && r.GraphicsOverlay.Id != "greenPortoverlay" && r.GraphicsOverlay.Id != "redPortoverlay" && r.GraphicsOverlay.Id != "17" && r.GraphicsOverlay.Id != "_sketchRectOverlay").ToList();
+
                     if (idGraphicOverlayResults.Count == 1)
                     {
                         var idGraphicResult = idGraphicOverlayResults.FirstOrDefault();
@@ -4531,9 +3912,9 @@ namespace EWLDitital.PresentationLayer.Views
                         if (idGraphicResult.Graphics.Count > 1)
                         {
                             mylistbox.Items.Clear();
-                            ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                           
                             Geometry_OnviewTap(_pointgraph);
-                            pnlRightMenu.Visibility = Visibility.Visible;
+                            
                             return;
                         }
 
@@ -4557,7 +3938,7 @@ namespace EWLDitital.PresentationLayer.Views
                                                 checkout.Remove(itemToRemove1);
                                             }
                                             //Mouse_tap_AddedCart(item3);
-                                            objMgr.DeleteShoppingCartByProduct(aa);
+                                            objMgr.DeleteShoppingCartByProduct("AVCS Products",aa);
                                         }
                                     }
                                 }
@@ -4609,7 +3990,7 @@ namespace EWLDitital.PresentationLayer.Views
 
 
                                 List<TemperaturesDetails> CartDetails = new List<TemperaturesDetails>();
-                                XElement xele = XElement.Parse(g.Attributes["SufbUnit"].ToString());
+                                XElement xele = XElement.Parse(g.Attributes["SubUnit"].ToString());
                                 var dddd = xele.Descendants();
                                 string sd = "";
                                 foreach (var item2 in dddd)
@@ -4621,8 +4002,8 @@ namespace EWLDitital.PresentationLayer.Views
 
                                 foreach (var ter1 in ter)
                                 {
-
-                                    if (ter1.Id != "seven" && ter1.Id != "Portoverlay" && ter1.Id != "greenPortoverlay" && ter1.Id != "redPortoverlay")
+                                    
+                                    if (ter1.Id != "seven" && ter1.Id != "Portoverlay" && ter1.Id != "greenPortoverlay" && ter1.Id != "redPortoverlay" && ter1.Id != "_sketchRectOverlay")
                                     {
                                         foreach (var item2 in ter1.Graphics)
                                         {
@@ -4669,19 +4050,22 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 if (Maincat == "Digital List of Lights")
                 {
-                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults1 = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+
+                    var idGraphicOverlayResults = idGraphicOverlayResults1.Where(r => r.GraphicsOverlay.Id != "seven" && r.GraphicsOverlay.Id != "Portoverlay" && r.GraphicsOverlay.Id != "greenPortoverlay" && r.GraphicsOverlay.Id != "redPortoverlay" && r.GraphicsOverlay.Id != "17" && r.GraphicsOverlay.Id != "_sketchRectOverlay").Distinct().ToList();
+
                     if (idGraphicOverlayResults.Count == 1)
                     {
                         var idGraphicResult = idGraphicOverlayResults.FirstOrDefault();
 
-                        if (idGraphicResult.Graphics.Count > 1)
-                        {
-                            mylistbox.Items.Clear();
-                            ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
-                            Geometry_OnviewTap(_pointgraph);
-                            pnlRightMenu.Visibility = Visibility.Visible;
-                            return;
-                        }
+                        //if (idGraphicResult.Graphics.Count > 1)
+                        //{
+                        //    mylistbox.Items.Clear();
+                        //    ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                        //    Geometry_OnviewTap(_pointgraph);
+                        //    pnlRightMenu.Visibility = Visibility.Visible;
+                        //    return;
+                        //}
 
                         var g = idGraphicResult.Graphics.FirstOrDefault();
                         var aa = g.Attributes.Keys.FirstOrDefault();
@@ -4703,7 +4087,7 @@ namespace EWLDitital.PresentationLayer.Views
                                             {
                                                 checkout.Remove(itemToRemove1);
                                             }
-                                            objMgr.DeleteShoppingCartByProduct(aa);
+                                            objMgr.DeleteShoppingCartByProduct("ADLL",aa);
                                         }
                                     }
                                 }
@@ -4779,7 +4163,10 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 if (Maincat == "Digital List of Radio Signals")
                 {
-                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults1 = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+
+                    var idGraphicOverlayResults = idGraphicOverlayResults1.Where(r => r.GraphicsOverlay.Id != "seven" && r.GraphicsOverlay.Id != "Portoverlay" && r.GraphicsOverlay.Id != "greenPortoverlay" && r.GraphicsOverlay.Id != "redPortoverlay" && r.GraphicsOverlay.Id != "17" && r.GraphicsOverlay.Id != "_sketchRectOverlay").ToList();
+
                     if (idGraphicOverlayResults.Count == 1)
                     {
                         var idGraphicResult = idGraphicOverlayResults.FirstOrDefault();
@@ -4787,8 +4174,6 @@ namespace EWLDitital.PresentationLayer.Views
                         if (idGraphicResult.Graphics.Count > 1)
                         {
                             mylistbox.Items.Clear();
-                            ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
-                            Geometry_OnviewTap(_pointgraph);
                             pnlRightMenu.Visibility = Visibility.Visible;
                             return;
                         }
@@ -4812,7 +4197,7 @@ namespace EWLDitital.PresentationLayer.Views
                                             {
                                                 checkout.Remove(itemToRemove1);
                                             }
-                                            objMgr.DeleteShoppingCartByProduct(aa);
+                                            objMgr.DeleteShoppingCartByProduct("ADRS",aa);
                                         }
                                     }
                                 }
@@ -4839,8 +4224,6 @@ namespace EWLDitital.PresentationLayer.Views
                                     }
                                 }
                             }
-                            //var que = objMgr.GetALRSByShortName(aa);
-                            //var val = que.FirstOrDefault();
 
                             bool alreadyExists = cart.Any(x => x.ShortName == g.Attributes["ShortName"].ToString());
                             if (!alreadyExists)
@@ -4886,21 +4269,23 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 if (Maincat == "e-NP Sailing Direction")
                 {
-                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults1 = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+
+                    var idGraphicOverlayResults = idGraphicOverlayResults1.Where(r => r.GraphicsOverlay.Id != "seven" && r.GraphicsOverlay.Id != "Portoverlay" && r.GraphicsOverlay.Id != "greenPortoverlay" && r.GraphicsOverlay.Id != "redPortoverlay" && r.GraphicsOverlay.Id != "17" && r.GraphicsOverlay.Id != "_sketchRectOverlay").ToList();
 
 
                     if (idGraphicOverlayResults.Count == 1)
                     {
                         var idGraphicResult = idGraphicOverlayResults.FirstOrDefault();
 
-                        if (idGraphicResult.Graphics.Count > 1)
-                        {
-                            mylistbox.Items.Clear();
-                            ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
-                            Geometry_OnviewTap(_pointgraph);
-                            pnlRightMenu.Visibility = Visibility.Visible;
-                            return;
-                        }
+                        //if (idGraphicResult.Graphics.Count > 1)
+                        //{
+                        //    mylistbox.Items.Clear();
+                        //    ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                        //    Geometry_OnviewTap(_pointgraph);
+                        //    pnlRightMenu.Visibility = Visibility.Visible;
+                        //    return;
+                        //}
 
                         var g = idGraphicResult.Graphics.FirstOrDefault();
                         var aa = g.Attributes.Keys.FirstOrDefault();
@@ -4922,7 +4307,7 @@ namespace EWLDitital.PresentationLayer.Views
                                             {
                                                 checkout.Remove(itemToRemove1);
                                             }
-                                            objMgr.DeleteShoppingCartByProduct(aa);
+                                            objMgr.DeleteShoppingCartByProduct("e-Nautical Publications", aa);
                                         }
                                     }
                                 }
@@ -4997,19 +4382,22 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 if (Maincat == "TotalTide")
                 {
-                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+                    IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults1 = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+
+                    var idGraphicOverlayResults = idGraphicOverlayResults1.Where(r => r.GraphicsOverlay.Id != "seven" && r.GraphicsOverlay.Id != "Portoverlay" && r.GraphicsOverlay.Id != "greenPortoverlay" && r.GraphicsOverlay.Id != "redPortoverlay" && r.GraphicsOverlay.Id != "17" && r.GraphicsOverlay.Id != "_sketchRectOverlay").ToList();
+
                     if (idGraphicOverlayResults.Count == 1)
                     {
                         var idGraphicResult = idGraphicOverlayResults.FirstOrDefault();
 
-                        if (idGraphicResult.Graphics.Count > 1)
-                        {
-                            mylistbox.Items.Clear();
-                            ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
-                            Geometry_OnviewTap(_pointgraph);
-                            pnlRightMenu.Visibility = Visibility.Visible;
-                            return;
-                        }
+                        //if (idGraphicResult.Graphics.Count > 1)
+                        //{
+                        //    mylistbox.Items.Clear();
+                        //    ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                        //    Geometry_OnviewTap(_pointgraph);
+                        //    pnlRightMenu.Visibility = Visibility.Visible;
+                        //    return;
+                        //}
 
                         var g = idGraphicResult.Graphics.FirstOrDefault();
                         var aa = g.Attributes.Keys.FirstOrDefault();
@@ -5030,7 +4418,7 @@ namespace EWLDitital.PresentationLayer.Views
                                             {
                                                 checkout.Remove(itemToRemove1);
                                             }
-                                            objMgr.DeleteShoppingCartByProduct(aa);
+                                            objMgr.DeleteShoppingCartByProduct("TotalTide",aa);
                                         }
                                     }
                                 }
@@ -5109,23 +4497,7 @@ namespace EWLDitital.PresentationLayer.Views
                 MessageBox.Show(ex.ToString(), "Error");
             }
         }
-
-        private Esri.ArcGISRuntime.Geometry.Geometry Graphiccoordinates_Aftertransform_wgs84_webmerc(Esri.ArcGISRuntime.Geometry.Geometry gr)//add this new method
-        {
-            Esri.ArcGISRuntime.Geometry.Geometry gr1 = gr;
-            try
-            {
-
-                var aftergr = (Esri.ArcGISRuntime.Geometry.Geometry)GeometryEngine.Project(gr, SpatialReference.Create(3857));
-
-                return aftergr;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-                return gr1;
-            }
-        }
+        
         static Esri.ArcGISRuntime.Geometry.Geometry Graphiccoordinates_Aftertransform(Graphic _graphic)
         {
             Esri.ArcGISRuntime.Geometry.Geometry gr1 = _graphic.Geometry;
@@ -5142,10 +4514,11 @@ namespace EWLDitital.PresentationLayer.Views
                 return gr1;
             }
         }
-        private void UnderRoot_Click(object sender, RoutedEventArgs e)//changes this entire method for rectangle
+        private void UnderRoot_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                Mouse.OverrideCursor = Cursors.Arrow;
                 var temproutegeom = MyMapView.SketchEditor.Geometry;//for routeline incomplete draw
                 if (twogrp.Count > 1)
                 {
@@ -5187,11 +4560,12 @@ namespace EWLDitital.PresentationLayer.Views
 
                             Geometry_OnviewTap(polygondrawgrp);
                             completecommand(SketchCreationMode.Polygon);
-                            _sketchOverlay.Graphics.Clear();
+                            //_sketchOverlay.Graphics.Clear();
+                            _sketchRectOverlay.Graphics.Clear();
                         }
                     }
                 }
-                else if (temproutegeom.GeometryType.ToString() == "Polyline")
+                else if (temproutegeom != null && temproutegeom.GeometryType.ToString() == "Polyline")
                 {
                     if (temproutegeom != null)
                     {
@@ -5217,10 +4591,8 @@ namespace EWLDitital.PresentationLayer.Views
 
                     }
                 }
-                else if (temproutegeom.GeometryType.ToString() == "Polygon")
+                else if (temproutegeom != null && temproutegeom.GeometryType.ToString() == "Polygon")
                 {
-
-
 
                     Esri.ArcGISRuntime.Geometry.Polygon polygeom = (Esri.ArcGISRuntime.Geometry.Polygon)GeometryEngine.NormalizeCentralMeridian(temproutegeom);
                     if (polygeom.Parts.Count > 1)
@@ -5235,9 +4607,29 @@ namespace EWLDitital.PresentationLayer.Views
                             // Geometry_OnviewTap(item);
                         }
                         completecommand(SketchCreationMode.Polygon);
-                        _sketchOverlay.Graphics.Clear();
+                        ///_sketchOverlay.Graphics.Clear();
+                        _sketchRectOverlay.Graphics.Clear();
                     }
                     else
+                    {
+                        if (temproutegeom != null)
+                        {
+                            Graphic graphic = CreateGraphic(temproutegeom);
+                            polygondrawgrp = coordinatesystem_polygon(graphic);
+                            if (polygondrawgrp != null)
+                            {
+
+                                Geometry_OnviewTap(polygondrawgrp);
+                                completecommand(SketchCreationMode.Polygon);
+                                //_sketchOverlay.Graphics.Clear();
+                                _sketchRectOverlay.Graphics.Clear();
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (temproutegeom != null)
                     {
                         Graphic graphic = CreateGraphic(temproutegeom);
                         polygondrawgrp = coordinatesystem_polygon(graphic);
@@ -5248,18 +4640,6 @@ namespace EWLDitital.PresentationLayer.Views
                             completecommand(SketchCreationMode.Polygon);
                             _sketchOverlay.Graphics.Clear();
                         }
-                    }
-                }
-                else
-                {
-                    Graphic graphic = CreateGraphic(temproutegeom);
-                    polygondrawgrp = coordinatesystem_polygon(graphic);
-                    if (polygondrawgrp != null)
-                    {
-
-                        Geometry_OnviewTap(polygondrawgrp);
-                        completecommand(SketchCreationMode.Polygon);
-                        _sketchOverlay.Graphics.Clear();
                     }
                 }
                 twogrp.Clear();
@@ -5313,7 +4693,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (selectedval.Contains(bb))
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName== "AVCS Products"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5373,7 +4753,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (selectedval.Contains(bb))
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5422,7 +4802,8 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 else
                 {
-                    foreach (var item in grc.SelectMany(i => i.Graphics.OrderBy(f=>Convert.ToInt32(f.Attributes["Usage"]))))
+                    Graphic singleitem = null;
+                    foreach (var item in grc.SelectMany(i => i.Graphics.OrderBy(f=>Convert.ToInt32(f.Attributes["Usage"]))).OrderBy(x=> Convert.ToInt32(x.Attributes["Usage"])))
                     {
 
                         if ((GeometryEngine.Intersects(item.Geometry, _graphic.Geometry) || GeometryEngine.Within(item.Geometry, _graphic.Geometry) || GeometryEngine.Overlaps(item.Geometry, _graphic.Geometry)))
@@ -5438,11 +4819,54 @@ namespace EWLDitital.PresentationLayer.Views
                                     itm.Content = aa;
                                     ToolTipService.SetToolTip(itm, tool);
                                     mylistbox.Items.Add(itm);
+                                    singleitem = item;
                                 }
                             }
                         }
                     }
-                    pnlRightMenu.Visibility = Visibility.Visible;
+                    if (mylistbox.Items.Count == 1)
+                    {
+                        mylistbox.Items.Clear();
+                        bool alreadyExists = cart.Any(x => x.ShortName == singleitem.Attributes["ShortName"].ToString());
+                        if (!alreadyExists)
+                        {
+                            string exist = "";
+                            string ss = singleitem.Attributes["ShortName"].ToString();
+                            DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
+                            DataTable dt = new DataTable();
+                            dt = objCart.CheckShoppingCartByName(ss, "AVCS Products");
+                            if (dt.Rows.Count > 0)
+                            {
+                                exist = "Exists";
+                            }
+                            else
+                            {
+                                exist = "NotExists";
+                            }
+
+                            cart.Add(new ShoppingCart()
+                            {
+                                Exists = exist,
+                                Id = cart.Count > 0 ? cart.Max(x => x.Id) + 1 : 1,
+                                ShortName = singleitem.Attributes["ShortName"].ToString(),
+                                Title = singleitem.Attributes["title"].ToString(),
+                                Scale = singleitem.Attributes["scale"].ToString(),
+                                Status = singleitem.Attributes["Status"].ToString(),
+                                Usage = objcont.Band(singleitem.Attributes["Usage"].ToString()),
+                                UnitId = singleitem.Attributes["UnitId"].ToString(),
+                                UnitTitle = singleitem.Attributes["UnitTitle"].ToString(),
+                                ProductName = "AVCS Products"
+                            });
+                        }
+
+                        dataGrid1.ItemsSource = null;
+                        dataGrid1.ItemsSource = cart.OrderByDescending(f => f.Id); ;
+                    }
+                    else
+                    {
+                        ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                        pnlRightMenu.Visibility = Visibility.Visible;
+                    }
                 }
             }
 
@@ -5491,7 +4915,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (selectedval.Contains(bb))
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5577,7 +5001,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (selectedval.Contains(bb))
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "AVCS Products"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5650,6 +5074,7 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 else
                 {
+                    Graphic singleitem = null;
                     foreach (var item in grc.SelectMany(i => i.Graphics))
                     {
 
@@ -5666,11 +5091,78 @@ namespace EWLDitital.PresentationLayer.Views
                                     itm.Content = aa;
                                     ToolTipService.SetToolTip(itm, tool);
                                     mylistbox.Items.Add(itm);
+                                    singleitem = item;
                                 }
                             }
                         }
                     }
-                    pnlRightMenu.Visibility = Visibility.Visible;
+                    if (mylistbox.Items.Count == 1)
+                    {
+                        mylistbox.Items.Clear();
+                        string exist = "";
+                        bool alreadyExists = cart1.Any(x => x.FProductId == singleitem.Attributes["ShortName"].ToString());
+                        if (!alreadyExists)
+                        {
+
+                            string ss = singleitem.Attributes["ShortName"].ToString();
+                            DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
+                            DataTable dt = new DataTable();
+                            dt = objCart.CheckShoppingCartByName(ss, "AVCS Products");
+                            if (dt.Rows.Count > 0)
+                            {
+                                exist = "Exists";
+                            }
+                            else
+                            {
+                                exist = "NotExists";
+                            }
+
+                            List<TemperaturesDetails> CartDetails = new List<TemperaturesDetails>();
+                            XElement xele = XElement.Parse(singleitem.Attributes["SubUnit"].ToString());
+                            var dddd = xele.Descendants();
+                            string sd = "";
+                            foreach (var item1 in dddd)
+                            {
+                                sd += item1.Value + ",";
+
+                            }
+                            // var ENCfolio = objMgr.GetAVCSByFolioId(sd.TrimEnd(','));
+
+                            foreach (var ter in grc1)
+                            {
+                                foreach (var item2 in ter.Graphics)
+                                {
+                                    var sub = item2.Attributes.Keys.FirstOrDefault();
+                                    if (sd.Contains(sub))
+                                    {
+                                        CartDetails.Add(new TemperaturesDetails()
+                                        {
+                                            ProductId = item2.Attributes["ShortName"].ToString(),
+                                            Title = item2.Attributes["title"].ToString(),
+                                            Band = objcont.Band(item2.Attributes["Usage"].ToString())
+                                        });
+                                    }
+                                }
+                            }
+
+                            cart1.Add(new Temperatures()
+                            {
+                                Exists = exist,
+                                Id = cart.Count > 0 ? cart.Max(x => x.Id) + 1 : 1,
+                                FProductId = singleitem.Attributes["ShortName"].ToString(),
+                                FTitle = singleitem.Attributes["Title"].ToString(),
+                                DetailsItems = CartDetails
+                            });
+                        }
+
+                        dataGrid2.ItemsSource = null;
+                        dataGrid2.ItemsSource = cart1.OrderByDescending(f => f.Id);
+                    }
+                    else
+                    {
+                        ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                        pnlRightMenu.Visibility = Visibility.Visible;
+                    }
                 }
             }
 
@@ -5700,7 +5192,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (bb == 13)
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADLL"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5757,7 +5249,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (s2.Contains(bb))
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADLL"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5868,7 +5360,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (selectedval.Contains(bb))
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADRS"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5924,7 +5416,7 @@ namespace EWLDitital.PresentationLayer.Views
                             {
                                 item.IsSelected = true;
                                 Mouse_tap_select(item);
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "ADRS"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -5970,6 +5462,7 @@ namespace EWLDitital.PresentationLayer.Views
                 }
                 else
                 {
+                    Graphic singleitem = null;
                     foreach (var item in grc.SelectMany(i => i.Graphics))
                     {
                         if ((GeometryEngine.Intersects(item.Geometry, _graphic.Geometry) || GeometryEngine.Within(item.Geometry, _graphic.Geometry) || GeometryEngine.Overlaps(item.Geometry, _graphic.Geometry)))
@@ -5985,11 +5478,54 @@ namespace EWLDitital.PresentationLayer.Views
                                     itm.Content = aa;
                                     ToolTipService.SetToolTip(itm, tool);
                                     mylistbox.Items.Add(itm);
+                                    singleitem = item;
                                 }
                             }
                         }
                     }
-                    pnlRightMenu.Visibility = Visibility.Visible;
+                    if (mylistbox.Items.Count == 1)
+                    {
+                        mylistbox.Items.Clear();
+                        bool alreadyExists = cart.Any(x => x.ShortName == singleitem.Attributes["ShortName"].ToString());
+                        if (!alreadyExists)
+                        {
+                            string exist = "";
+                            string ss = singleitem.Attributes["ShortName"].ToString();
+                            DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
+                            DataTable dt = new DataTable();
+                            dt = objCart.CheckShoppingCartByName(ss, "AVCS Products");
+                            if (dt.Rows.Count > 0)
+                            {
+                                exist = "Exists";
+                            }
+                            else
+                            {
+                                exist = "NotExists";
+                            }
+
+                            cart.Add(new ShoppingCart()
+                            {
+                                Exists = exist,
+                                Id = cart.Count > 0 ? cart.Max(x => x.Id) + 1 : 1,
+                                ShortName = singleitem.Attributes["ShortName"].ToString(),
+                                Title = singleitem.Attributes["title"].ToString(),
+                                Scale = singleitem.Attributes["scale"].ToString(),
+                                Status = singleitem.Attributes["Status"].ToString(),
+                                Usage = objcont.Band(singleitem.Attributes["Usage"].ToString()),
+                                UnitId = singleitem.Attributes["UnitId"].ToString(),
+                                UnitTitle = singleitem.Attributes["UnitTitle"].ToString(),
+                                ProductName = "AVCS Products"
+                            });
+                        }
+
+                        dataGrid1.ItemsSource = null;
+                        dataGrid1.ItemsSource = cart.OrderByDescending(f => f.Id);
+                    }
+                    else
+                    {
+                        ShowHideMenu("sbShowRightMenu", btnLeftMenuShow, pnlRightMenu);
+                        pnlRightMenu.Visibility = Visibility.Visible;
+                    }
                 }
             }
 
@@ -6019,7 +5555,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (bb == 14)
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "e-Nautical Publications"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -6035,7 +5571,7 @@ namespace EWLDitital.PresentationLayer.Views
                                     string ss = item.Attributes["ShortName"].ToString();
                                     DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
                                     DataTable dt = new DataTable();
-                                    dt = objCart.CheckShoppingCartByName(ss, "ADRS");
+                                    dt = objCart.CheckShoppingCartByName(ss, "e-Nautical Publications");
                                     if (dt.Rows.Count > 0)
                                     {
                                         exist = "Exists";
@@ -6078,7 +5614,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (bb == 14)
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "e-Nautical Publications"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -6095,7 +5631,7 @@ namespace EWLDitital.PresentationLayer.Views
                                     string ss = item.Attributes["ShortName"].ToString();
                                     DataAccessLayer.CartRepository objCart = new DataAccessLayer.CartRepository();
                                     DataTable dt = new DataTable();
-                                    dt = objCart.CheckShoppingCartByName(ss, "ADRS");
+                                    dt = objCart.CheckShoppingCartByName(ss, "e-Nautical Publications");
                                     if (dt.Rows.Count > 0)
                                     {
                                         exist = "Exists";
@@ -6175,7 +5711,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (bb == 15)
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "TotalTide"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -6236,7 +5772,7 @@ namespace EWLDitital.PresentationLayer.Views
                             if (bb == 15)
                             {
                                 item.IsSelected = true;
-                                if (checkout.Any(x => x.ShortName == aa))
+                                if (checkout.Any(x => x.ShortName == aa && x.ProductName == "TotalTide"))
                                 {
                                     Mouse_tap_AddedCart(item);
                                 }
@@ -6308,26 +5844,216 @@ namespace EWLDitital.PresentationLayer.Views
             }
         }
 
-        
+        Esri.ArcGISRuntime.Geometry.PointCollection importedlinepoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
         Esri.ArcGISRuntime.Geometry.PointCollection normalizedimportedpoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
         private void Import_Click(object sender, RoutedEventArgs e)
+        {
+
+            string strfilename = "";
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            // openFileDialog.Filter = "All files (*.*)|*.*";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                openFileDialog.DefaultExt = ".bsk";
+                openFileDialog.Filter = "Basket(.bsk)|*.bsk";
+                strfilename = openFileDialog.FileName;
+
+            }
+            if (strfilename.Contains(".csv"))
+            {
+                csv_Import(strfilename);
+                // csv_export_new(sender, e, strfilename);
+            }
+            else if (strfilename.Contains(".rtz"))
+            {
+                rtz_Import(strfilename);
+                //csv_export(sender, e, strfilename);
+            }
+
+            
+        }
+
+        private void csv_Import(string fpath)//add this new function as fallowing
         {
             _sketchOverlay.Graphics.Clear();
             importedlinepoints.Clear();
             routewaypointoverlay.Graphics.Clear();
-            SelectedRoutName = ""; 
+            List<MapPoint> _mappoint = new List<MapPoint>();
+            SelectedRoutName = "";
+            string[] columns =
+                                {
+                                    @"LAT",
+                                    @"LON"
+                                };
             try
             {
-                string strfilename = "";
-                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+                //string strfilename = "";
+                // Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
                 // openFileDialog.Filter = "All files (*.*)|*.*";
-                if (openFileDialog.ShowDialog() == true)
+                //if (openFileDialog.ShowDialog() == true)
+                //{
+                //    openFileDialog.DefaultExt = ".bsk";
+                //    openFileDialog.Filter = "Basket(.bsk)|*.bsk";
+                //    strfilename = openFileDialog.FileName;
+                //    strfilename = openFileDialog.FileName;
+                //}
+
+                string[] csvlines = File.ReadAllLines(fpath);
+                List<string> strt = new List<string>();
+
+                var coun = csvlines.Count();
+
+                for (int i = 0; i <= coun; i++)
                 {
-                    openFileDialog.DefaultExt = ".bsk";
-                    openFileDialog.Filter = "Basket(.bsk)|*.bsk";
-                    strfilename = openFileDialog.FileName;
-                    strfilename = openFileDialog.FileName;
+                    if (i == coun)
+                    {
+                        // MapPoint mptx = new MapPoint(mpt[i--].X, mpt[i--].Y, SpatialReferences.Wgs84);
+                        // transformed_new.Add(mptx);
+
+                        break;
+
+                    }
+                    if (i >= 4)
+                    {
+                        var laso = csvlines[i].ToString();
+                        var ser = laso.Split(',');
+                        var sear = csvlines[i].ToCharArray();
+                        StringBuilder sb_1 = new StringBuilder();
+                        StringBuilder sb_2 = new StringBuilder();
+                        int cour = 0;
+                        int cour2 = 0;
+                        foreach (var ch in sear)
+                        {
+                            if (Char.IsLetter(ch))
+                            {
+                                sb_1.Append(ch);
+                                cour++;
+                                cour2++;
+                                sb_2.Append(sb_1);
+                            }
+                            else
+                            {
+                                sb_1.Append(ch);
+                            }
+
+
+                            if (cour == 1)
+                            {
+                                sb_1.Clear();
+                                cour--;
+                            }
+                            if (cour2 == 2)
+                            {
+                                strt.Add(sb_2.ToString());
+                                break;
+                            }
+                        }
+                    }
                 }
+                //select the indices of the columns we want
+                foreach (var ser in strt)
+                {
+                    var rer = dotCount_manipulatestring(ser);
+                    var string2 = rer.Item2;
+                    var mpt_wgs = CoordinateFormatter.FromLatitudeLongitude(string2, SpatialReferences.Wgs84);
+                    _mappoint.Add(mpt_wgs);
+                    importedlinepoints.Add(mpt_wgs);
+
+                }
+                normalizedimportedpoints = CalcNormalize_latest(_mappoint);
+                var pointline = loadrouteline_create(normalizedimportedpoints);
+
+                var roadPolyline = pointline as Esri.ArcGISRuntime.Geometry.Polyline;
+                // var roadPolyline = graphic.Geometry as Esri.ArcGISRuntime.Geometry.Polyline;
+                this.polylineBuilder = new PolylineBuilder(roadPolyline);
+                if (polylineBuilder.Parts.Count > 1)
+                {
+                    var item = coordinatesystem_polyline_new(pointline);
+                    foreach (var item1 in item)
+                    {
+                        // var set = Graphiccoordinates_Aftertransform(item1);
+                        _sketchOverlay.Graphics.Add(item1);
+                        //route_symbolsadding_webmerc(get);
+                        //gridrouteline.Add(item1);
+                    }
+                }
+                else
+                {
+                    var loadedgraphic = coordinatesystem_polyline(pointline);
+                    _sketchOverlay.Graphics.Add(loadedgraphic);
+                    // route_symbolsadding_webmerc(get);
+
+                }
+                route_symbolsadding_webmerc(normalizedimportedpoints);
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        public static (int, string) dotCount_manipulatestring(string str)
+        {
+            int spcctr = 0;
+            string str1 = null;
+            string sub2 = null;
+
+            StringBuilder sb = new StringBuilder(str);
+            sb.Replace(',', ' ');
+            var fin = sb.ToString();
+            var remfirst1 = fin.Remove(0, 2);
+            var ser1 = remfirst1.ToCharArray();
+            for (int i = 0; i < ser1.Length; i++)
+            {
+                str1 = remfirst1.Substring(i, 1);
+                if (str1 == " ")
+                {
+                    if (spcctr == 0)
+                    {
+
+                        ser1.SetValue(' ', i);
+
+                    }
+                    else if (spcctr == 1)
+                    {
+
+                        ser1.SetValue(' ', i);
+                    }
+                    else if (spcctr == 2)
+                    {
+
+                        ser1.SetValue(' ', i);
+
+                    }
+                    else if (spcctr == 3)
+                    {
+
+                        ser1.SetValue(' ', i);
+
+                    }
+                    else if (spcctr == 4)
+                    {
+
+                        ser1.SetValue(' ', i);
+                    }
+
+                    spcctr++;
+                }
+                sub2 = new string(ser1);
+            }
+
+            return (spcctr, sub2);
+        }
+        private void rtz_Import(string strfilename)//add this new function as fallowing
+        {
+            _sketchOverlay.Graphics.Clear();
+            importedlinepoints.Clear();
+            routewaypointoverlay.Graphics.Clear();
+
+            SelectedRoutName = "";
+            try
+            {
 
                 XDocument doc1 = XDocument.Load(strfilename);
                 XNamespace ns = "http://www.cirm.org/RTZ/1/0";
@@ -6382,16 +6108,7 @@ namespace EWLDitital.PresentationLayer.Views
         }
         private Esri.ArcGISRuntime.Geometry.PointCollection CalcNormalize_latest(List<MapPoint> mpt)
         {
-            double mptx1 = 0;
-            double mptx2 = 0;
-            double a = 0;
-            int count = 0;
-            double mptx2new = 0;
-
-            int index1 = 0;
-            int index2 = 0;
-            MapPoint mpt2 = null;
-            MapPoint mpt1 = null;
+            
 
             for (int i = 0; i <= mpt.Count; i++)//reading correct values indexed
             {
@@ -6522,38 +6239,40 @@ namespace EWLDitital.PresentationLayer.Views
             //mapLocation = (MapPoint)GeometryEngine.NormalizeCentralMeridian(mapLocation);
             // var ste = Mapcoordinates_Change(mapLocation);
         }
-        private (Esri.ArcGISRuntime.Geometry.PointCollection, List<MapPoint>) pointsconverter_importline(Esri.ArcGISRuntime.Geometry.PointCollection PointCollection)
+        private void ExportRoute_Click(object sender, RoutedEventArgs e )
         {
-            Esri.ArcGISRuntime.Geometry.PointCollection transformed = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-            List<MapPoint> mpt_ad = new List<MapPoint>();
-            foreach (var item in PointCollection)
+
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.Filter = "RTZ(.rtz)|*.rtz | Tokyo Keiki EC8x00|*.csv";
+            dlg.ShowDialog();
+            string fpath = dlg.FileName;
+            if (fpath.Contains(".csv"))
             {
-                if (item.X < 0)
-                {
-                    //  var longitude = (double)item.X + 360;
-
-                    // MapPoint mp = new MapPoint(item,SpatialReferences.Wgs84);
-                    var aftergr = (Esri.ArcGISRuntime.Geometry.MapPoint)GeometryEngine.Project(item, SpatialReference.Create(3857));
-                    var longitude = (double)item.X + 360;
-                    var azivalue = longitude * 111319.491;
-                    // var longir = item.Y * 111325.143;
-                    MapPoint aftermappoint = new MapPoint(azivalue, aftergr.Y, SpatialReference.Create(3857));
-                    transformed.Add(aftermappoint);
-                    mpt_ad.Add(aftermappoint);
-                }
-                else
-                {
-                    var aftergr = (Esri.ArcGISRuntime.Geometry.MapPoint)GeometryEngine.Project(item, SpatialReference.Create(3857));
-                    transformed.Add(aftergr);
-                    mpt_ad.Add(aftergr);
-                }
+                csv_export_new(fpath);
             }
-            return (transformed, mpt_ad);
+            else if (fpath.Contains(".rtz"))
+            {
+                rtz_export_new(fpath);
+            }
+        }
+        private void Geodetic_ExportRoute_Click_both(object sender, RoutedEventArgs e)
+        {
 
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.Filter = "RTZ(.rtz)|*.rtz | Tokyo Keiki EC8x00|*.csv";
+            dlg.ShowDialog();
+            string fpath = dlg.FileName;
+            if (fpath.Contains(".rtz"))
+            {
+                rtz_export_new(fpath);
+            }
+            else if (fpath.Contains(".csv"))
+            {
+                csv_export_new(fpath);
+            }
         }
 
-      
-        private void ExportRoute_Click(object sender, RoutedEventArgs e)
+        private void rtz_export_new(string fpath)
         {
             XmlDeclaration xmldecl;
             XmlDocument doc = new XmlDocument();
@@ -6625,22 +6344,145 @@ namespace EWLDitital.PresentationLayer.Views
             }
 
             doc.AppendChild(root);
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.DefaultExt = ".rtz";
-            dlg.Filter = "RTZ(.rtz)|*.rtz";
-            if (dlg.ShowDialog() == true)
+            doc.Save(fpath);
+        }
+        private void csv_export_new(string fpath)
+        {
+            List<double> distance = new List<double>();
+            Esri.ArcGISRuntime.Geometry.PointCollection geo_points = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+
+            //Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            //dlg.DefaultExt = ".csv";
+            //dlg.Filter = "RTZ(.rtz)|*.rtz | Tokyo Keiki EC8x00|*.csv";
+            //dlg.ShowDialog();
+            //string fpath = dlg.FileName;
+            string fpath_new = fpath;
+            //string filePath = @"C:\Users\nanip\OneDrive\Desktop\routelineexport\File7.csv";
+            DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
+            DataTable dt = new DataTable();
+            dt = objRout.GetRouteLineDetails(SelectedRoutName);
+
+            using (TextWriter sw = new StreamWriter(fpath_new))
             {
-                doc.Save(dlg.FileName);
+                sw.WriteLine("// ROUTE SHEET exported by JRC ECDIS.");
+                sw.WriteLine("// <<NOTE>>This strings // indicate comment column/cells. You can edit freely.");
+                sw.WriteLine("//SG,<Normal>");
+                sw.WriteLine(@"// WPT No.,LAT, ,,LON, ,,PORT[NM],STBD[NM],Arr. Rad[NM],Speed[kn],Sail(RL/GC),ROT[deg/min],Turn Rad[NM],Time Zone, ,Name");
+                // sw.WriteLine(@"ID, LAT,LON, , , , , , , ,To WPT,TOTAL");
+
+
+
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                    var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+
+                    MapPoint mp = new MapPoint(latit, longit, SpatialReferences.WebMercator);//add this
+                    MapPoint aftertrans = (MapPoint)GeometryEngine.Project(mp, SpatialReference.Create(4326));
+
+                    geo_points.Add(aftertrans);
+                }
+                for (int j = 0; j < geo_points.Count; j++)
+                {
+                    var saf_deg_dec_minu = CoordinateFormatter.ToLatitudeLongitude(geo_points[j], LatitudeLongitudeFormat.DegreesDecimalMinutes, 3);
+                    var saf_dec_deg = CoordinateFormatter.ToLatitudeLongitude(geo_points[j], LatitudeLongitudeFormat.DecimalDegrees, 3);
+                    var saf_deg_min_sec = CoordinateFormatter.ToLatitudeLongitude(geo_points[j], LatitudeLongitudeFormat.DegreesMinutesSeconds, 3);
+
+
+                    var cnt = SpaceCount_manipulatestring(saf_deg_dec_minu);
+                    var cnt1 = cnt.Item1;
+                    var cnt2 = cnt.Item2;
+                    var latstr = cnt2.Split(':');//[0]50-16.832N,[1]001-22.690W
+
+                    var lat = latstr[0].Last();//N
+                    var firststrsplit = latstr[0].Split('-');//[0]50,[1]16.832N
+                    var firststr = firststrsplit[0].ToString();//50
+                    var midlstr1count = firststrsplit[1].Length - 1;//6
+                    var midlstr1 = firststrsplit[1].Substring(0, midlstr1count);//16.832
+
+                    var longitu = latstr[1].Last();//W
+                    var secondstrsplit = latstr[1].Split('-');//[0]001,[1]22.690W
+                    var secondstr = secondstrsplit[0].ToString();//001
+                    var midlstr2count = secondstrsplit[1].Length - 1;//6
+                    var midlstr2 = secondstrsplit[1].Substring(0, midlstr2count);//22.690
+
+                    var port = 0.2;
+                    var stbd = 0.2;
+                    var arr_rad = 0.5;
+                    var speed = 20;
+                    var sail = "RL";
+                    var Rot = 38.2;
+                    var turnRad = 0.5;
+                    var Timezone = "09:00";//utc time zone current export time 
+                    var Time_zone = "E";
+
+
+                    if (j >= 1)
+                    {
+                        // GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geo_points.ElementAt(j - 1), geo_points.ElementAt(j), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                        // double laxidromeround = Math.Round(loxodromeMeasureResult.Distance, 2);
+                        //distance.Add(laxidromeround);
+                        // double totaldist = distance.ElementAt(j - 1) + distance.ElementAt(j);
+                        //double rounddecim = Math.Round(totaldist, 2);
+                        //distance[j] = rounddecim;
+                        sw.WriteLine(@"{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}", j, firststr, midlstr1, lat, secondstr, midlstr2, longitu, port, stbd, arr_rad, speed, sail, Rot, turnRad, Timezone, Time_zone);
+
+                    }
+                    else
+                    {
+
+                        sw.WriteLine(@"{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}", j, firststr, midlstr1, lat, secondstr, midlstr2, longitu, "***", "***", "***", "***", "***", "***", "***", Timezone, Time_zone);
+                        //distance.Add(loxodromeMeasureResult);
+                    }
+
+
+                }
             }
+        }
+        public static (int, string) SpaceCount_manipulatestring(string str)
+        {
+            int spcctr = 0;
+            string str1 = null;
+            string sub2 = null;
+            var so = str.ToCharArray();
+            for (int i = 0; i < str.Length; i++)
+            {
+                str1 = str.Substring(i, 1);
+                if (str1 == " ")
+                {
+                    if (spcctr == 0)
+                    {
 
+                        so.SetValue('-', i);
 
+                    }
+                    else if (spcctr == 1)
+                    {
+
+                        so.SetValue(':', i);
+                    }
+                    else if (spcctr == 2)
+                    {
+
+                        so.SetValue('-', i);
+
+                    }
+                    spcctr++;
+                }
+
+            }
+            //  string str = new string(character_array);
+            sub2 = new string(so);
+            return (spcctr, sub2);
         }
         private async void rectangle_Click(object sender, RoutedEventArgs e)
         {
             //RemoveHeilight();
-            routewaypointoverlay.Graphics.Clear();
+           // routewaypointoverlay.Graphics.Clear();
             MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-            _sketchOverlay.Graphics.Clear();
+            //_sketchOverlay.Graphics.Clear();
+            _sketchRectOverlay.Graphics.Clear();
+            Mouse.OverrideCursor = Cursors.Cross;
             routeline = null;
             polygondrawgrp = null;
             try
@@ -6662,6 +6504,7 @@ namespace EWLDitital.PresentationLayer.Views
                     polygondrawgrp = coordinatesystem_polygon(graphic);
                 }
                 MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                Mouse.OverrideCursor = Cursors.Arrow;
             }
             catch //(Exception ex)
             {
@@ -6671,9 +6514,11 @@ namespace EWLDitital.PresentationLayer.Views
         private async void polygon_Click(object sender, RoutedEventArgs e)
         {
             //RemoveHeilight();
-            routewaypointoverlay.Graphics.Clear();
+            //routewaypointoverlay.Graphics.Clear();
             MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-            _sketchOverlay.Graphics.Clear();
+            //_sketchOverlay.Graphics.Clear();
+            _sketchRectOverlay.Graphics.Clear();
+            Mouse.OverrideCursor = Cursors.Cross;
             routeline = null;
             polygondrawgrp = null;
             try
@@ -6694,6 +6539,7 @@ namespace EWLDitital.PresentationLayer.Views
                     polygondrawgrp = coordinatesystem_polygon(graphic);
                 }
                 MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                Mouse.OverrideCursor = Cursors.Arrow;
             }
             catch //(Exception ex)
             {
@@ -6706,61 +6552,123 @@ namespace EWLDitital.PresentationLayer.Views
         IReadOnlyList<MapPoint> routelinepointlist = null;
         private void clear_Click(object sender, RoutedEventArgs e)
         {
-            string message = "Are you sure you want to clear this route line?";
-            string caption = "Confirmation";
-            lstSelectedRoute.Clear();
-            SelectedRoutName = "";
-           
-            MessageBoxButton buttons = MessageBoxButton.YesNo;
-            MessageBoxImage icon = MessageBoxImage.Question;
-            if (MessageBox.Show(message, caption, buttons, icon) == MessageBoxResult.Yes)
+            try
             {
-                // OK code here
-                geodesic_savbtnpoints_webmerccollection.Clear();
-                //Mouse.OverrideCursor = Cursors.Cross;
-                _sketchOverlay.Graphics.Clear();
-                routewaypointoverlay.Graphics.Clear();
-                gridrouteline.Clear();//add this new line
-                importedlinepoints.Clear();
-                normalizedimportedpoints.Clear();
+                string message = "Are you sure you want to clear this route line?";
+                string caption = "Confirmation";
+                lstSelectedRoute.Clear();
+                SelectedRoutName = "";
 
-                // Cursor = systemCursor2;
-                MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-                MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
-                MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
-            }
-            else
-            {
-                return;
-            }
-            if (MyMapView.SketchEditor.CancelCommand.CanExecute(null))
-            {
-                MyMapView.SketchEditor.CancelCommand.Execute(null);
-                // lvUsers.Items.Clear();
-               // Mouse.OverrideCursor = Cursors.Cross;
-                // Cursor = systemCursor1;
-                MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-                MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
-            }
-            else
-            {
-                _sketchOverlay.Graphics.Clear();
+                MessageBoxButton buttons = MessageBoxButton.YesNo;
+                MessageBoxImage icon = MessageBoxImage.Question;
+                if (MessageBox.Show(message, caption, buttons, icon) == MessageBoxResult.Yes)
+                {
+                    // OK code here
+                    geodesic_savbtnpoints_webmerccollection.Clear();
+                    //Mouse.OverrideCursor = Cursors.Cross;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    gridrouteline.Clear();//add this new line
+                    importedlinepoints.Clear();
+                    normalizedimportedpoints.Clear();
+                    symbolspointslist_savebtn.Clear();
+                    // Cursor = systemCursor2;
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
+                }
+                else
+                {
+                    return;
+                }
+                if (MyMapView.SketchEditor.CancelCommand.CanExecute(null))
+                {
+                    MyMapView.SketchEditor.CancelCommand.Execute(null);
+                    // lvUsers.Items.Clear();
+                    // Mouse.OverrideCursor = Cursors.Cross;
+                    // Cursor = systemCursor1;
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                }
+                else
+                {
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    gridrouteline.Clear();//add this new line
+                                          // Mouse.OverrideCursor = Cursors.Cross;
+                                          //  Cursor = systemCursor1;
+                    importedlinepoints.Clear();
+                    normalizedimportedpoints.Clear();
+                    symbolspointslist_savebtn.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                    MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
+                }
+                Mouse.OverrideCursor = Cursors.Arrow;
                 routewaypointoverlay.Graphics.Clear();
-                gridrouteline.Clear();//add this new line
-                                      // Mouse.OverrideCursor = Cursors.Cross;
-                                      //  Cursor = systemCursor1;
-                importedlinepoints.Clear();
-                normalizedimportedpoints.Clear();
-                MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-                MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
-                MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
+                routelineconfigclear();
             }
-            Mouse.OverrideCursor = Cursors.Arrow;
-            routewaypointoverlay.Graphics.Clear();
-            routelineconfigclear();
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void clearPolygon_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string message = "Are you sure you want to clear this selection tool?";
+                string caption = "Confirmation";
+                lstSelectedRoute.Clear();
+                SelectedRoutName = "";
+                if (MyMapView.SketchEditor.Geometry == null)
+                {
+                    MessageBox.Show("No Rectangle Geometry Present On Map");
+                }
+                else
+                {
+                    var ser = MyMapView.SketchEditor.Geometry.GeometryType.ToString();
+                    if (ser == "Polygon")
+                    {
+                        MessageBoxButton buttons = MessageBoxButton.YesNo;
+                        MessageBoxImage icon = MessageBoxImage.Question;
+                        if (MessageBox.Show(message, caption, buttons, icon) == MessageBoxResult.Yes)
+                        {
+                            if (ser == "Polygon" && MyMapView.SketchEditor.CancelCommand.CanExecute(null))
+                            {
+                                MyMapView.SketchEditor.CancelCommand.Execute(null);
+                                // lvUsers.Items.Clear();
+                                var systemCursor1 = System.Windows.Input.Cursors.Arrow;
+                                Cursor = systemCursor1;
+                                MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                                MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+                            }
+
+                            gridrouteline.Clear();
+                        }
+                        else
+                        {
+
+                            Mouse.OverrideCursor = Cursors.Arrow;
+                            return;
+                        }
+                    }
+                    else if (ser == "Polyline")
+                    {
+                        MessageBox.Show("No Rectangle Geometry Present On Map to Clear");
+                        return;
+                    }
+                }
+
+                routelineconfigclear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private List<Graphic> coordinatesystem_polyline_new(Esri.ArcGISRuntime.Geometry.Geometry geometry)//add this entire new method
+        private List<Graphic> coordinatesystem_polyline_new(Esri.ArcGISRuntime.Geometry.Geometry geometry)
         {
             List<Graphic> _polylinelistGraphic = new List<Graphic>();
             Graphic _polylineGraphic = null;
@@ -6780,7 +6688,7 @@ namespace EWLDitital.PresentationLayer.Views
                 //Create symbol for polyline
                 //  var polylineSymbol = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(0, 0, 255), 3);
                 // var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.Green, 3);
-                var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 3);
+                var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
                 // polys3.MarkerPlacement = SimpleLineSymbolMarkerPlacement.End;
                 // polys3.ma = getpic1();
                 //polys3.MarkerStyle = SimpleLineSymbolMarkerStyle.Arrow;
@@ -6859,16 +6767,32 @@ namespace EWLDitital.PresentationLayer.Views
                             objMgr.DeleteRouteLineDetailsByName(txtRouteName.Text.Trim());
                             objMgr.DeleteRouteLineByName(txtRouteName.Text.Trim());
 
-                            int result1 = objRout.InsertRoute(txtRouteName.Text, waypointcount);
+                            int result1 = objRout.InsertRoute(txtRouteName.Text, waypointcount,"1");
+                            int count = 0;//to know edit import
+                            List<MapPoint> list_editpts = new List<MapPoint>();
                             if (result1 > 0)
                             {
+                                if (importedlinepoints.Count > 1)//to reset that exisiting imported points
+                                {
+                                    importedlinepoints.Clear();
+                                    normalizedimportedpoints.Clear();
+                                    count++;
+
+                                }
                                 foreach (var ter in routelinepointlist)
                                 {
+
                                     double lat = ter.X;
                                     double longi = ter.Y;
                                     objRout.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
+
                                 }
+                                //if (count >= 1)
+                                //{
+                                //    normalizedimportedpoints_edit = CalcNormalize_latest(list_editpts);
+                                //}
                             }
+
                         }
                         if (MessageBoxResult.No == result)
                         {
@@ -6877,15 +6801,31 @@ namespace EWLDitital.PresentationLayer.Views
                     }
                     else
                     {
-                        int result = objRout.InsertRoute(txtRouteName.Text, waypointcount);
+                        int result = objRout.InsertRoute(txtRouteName.Text, waypointcount,"1");
+                        int count = 0;//to know edit import
+                        
+                        List<MapPoint> list_editpts = new List<MapPoint>();
                         if (result > 0)
                         {
+                            if (importedlinepoints.Count > 1)
+                            {
+                                importedlinepoints.Clear();
+                                normalizedimportedpoints.Clear();
+                                count++;
+
+                            }
                             foreach (var ter in routelinepointlist)
                             {
                                 double lat = ter.X;
                                 double longi = ter.Y;
                                 objRout.InsertRouteDetails(result, lat.ToString(), longi.ToString());
+
+
                             }
+                            //if (count >= 1)
+                            //{
+                            //    normalizedimportedpoints_edit = CalcNormalize_latest(list_editpts);
+                            //}
                         }
                     }
 
@@ -6934,9 +6874,9 @@ namespace EWLDitital.PresentationLayer.Views
                     MessageBox.Show("Please draw at least two waypoints", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-
+                MessageBox.Show(ex.Message);
             }
         }
         private void save_Click(object sender, RoutedEventArgs e)
@@ -6948,9 +6888,9 @@ namespace EWLDitital.PresentationLayer.Views
                 {
                     DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
                     DataTable dt = new DataTable();
-                    dt = objCart.GetRouteLine();
+                    dt = objCart.GetRouteLine("1");
                     int cnt = dt.Rows.Count + 1;
-                    string str = "Route_" + cnt;
+                    string str = "SRoute_" + cnt;
                     txtRouteName.Text = str;
                 }
                 else
@@ -6966,32 +6906,39 @@ namespace EWLDitital.PresentationLayer.Views
                 MessageBox.Show(ex.Message);
             }
         }
-        private Esri.ArcGISRuntime.Geometry.Polyline CreateBorder(IReadOnlyList<MapPoint> mappoint)
+        private void save_Click1(object sender, RoutedEventArgs e)
         {
             try
             {
-                Esri.ArcGISRuntime.Geometry.PointCollection borderCountryPointCollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
-                foreach (var sat in mappoint)
-                {
-                    borderCountryPointCollection.Add(sat.X, sat.Y);
-                }
-                Esri.ArcGISRuntime.Geometry.Polyline borderCountryPolyline = new Esri.ArcGISRuntime.Geometry.Polyline(borderCountryPointCollection);
-                // Create a polyline geometry from the point collection.
 
-                // Return the polyline.
-                return borderCountryPolyline;
+                if (SelectedRoutName == "")
+                {
+                    DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
+                    DataTable dt = new DataTable();
+                    dt = objCart.GetRouteLine("2");
+                    int cnt = dt.Rows.Count + 1;
+                    string str = "CRoute_" + cnt;
+                    txtRouteName1.Text = str;
+                }
+                else
+                {
+                    txtRouteName1.Text = SelectedRoutName;
+
+                }
+                SaveRouteName1.Visibility = Visibility.Visible;
+
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                return null;
             }
         }
+
         public Graphic TempRoute = null;
         public string SelectedRoutName = "";
         Graphic _countryBorderPolylineGraphic = null;
-        Esri.ArcGISRuntime.Geometry.Geometry geom = null;//add
-        List<MapPoint> loadpoints = new List<MapPoint>();//add
+        Esri.ArcGISRuntime.Geometry.Geometry geom = null;
+        List<MapPoint> loadpoints = new List<MapPoint>();
         private void RouteGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
@@ -7062,9 +7009,16 @@ namespace EWLDitital.PresentationLayer.Views
         }
         private void load_Click(object sender, RoutedEventArgs e)
         {
-            BindRouteLine();
+            BindRouteLine("1");
             ShowHideMenu("sbShowRightRoute", btnLeftMenuShow, pnlRightRoute);
         }
+
+        private void load_Click1(object sender, RoutedEventArgs e)
+        {
+            BindRouteLine("2");
+            ShowHideMenu("sbShowRightRoute", btnLeftMenuShow, pnlRightRoute1);
+        }
+
         private void zoomIn_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -7135,7 +7089,7 @@ namespace EWLDitital.PresentationLayer.Views
                         else
                         {
                             approachoverlay.ClearSelection();
-                            approachoverlay.IsVisible = true;
+                            approachoverlay.IsVisible = false;
                         }
                     }
                     else if (ImageScale > 2000000 && ImageScale <= 8000000)
@@ -7618,34 +7572,39 @@ namespace EWLDitital.PresentationLayer.Views
                 if (avcs_tab.IsSelected)
                 {
 
-
-                    foreach (string eno in lstSelectedEmpNo)
+                    if (avc)
                     {
-                        var result = objMgr.DeleteShoppingCartByAVCS(eno);
-
-                        foreach (var val in cart1)
+                        var result = objMgr.DeleteShoppingCartByAVCSProdut("AVCS Products");
+                    }
+                    else
+                    {
+                        foreach (string eno in lstSelectedEmpNo)
                         {
-                            if (val.FProductId == eno)
+                            var result = objMgr.DeleteShoppingCartByAVCS(eno);
+
+                            foreach (var val in cart1)
                             {
-                                val.Exists = "NotExists";
+                                if (val.FProductId == eno)
+                                {
+                                    val.Exists = "NotExists";
+                                }
+                            }
+
+                            foreach (var val in cart)
+                            {
+                                if (val.ShortName == eno)
+                                {
+                                    val.Exists = "NotExists";
+                                }
                             }
                         }
-
-                        foreach (var val in cart)
-                        {
-                            if (val.ShortName == eno)
-                            {
-                                val.Exists = "NotExists";
-                            }
-                        }
-
                     }
                 }
-                else
+                if (adll_tab.IsSelected)
                 {
                     foreach (string eno in lstSelectedEmpNo)
                     {
-                        var result = objMgr.DeleteShoppingCartByProduct(eno);
+                        var result = objMgr.DeleteShoppingCartByProduct("ADLL", eno);
 
                         foreach (var val in cart1)
                         {
@@ -7662,11 +7621,100 @@ namespace EWLDitital.PresentationLayer.Views
                                 val.Exists = "NotExists";
                             }
                         }
-
                     }
-
                 }
+                if (adrs_tab.IsSelected)
+                {
+                    foreach (string eno in lstSelectedEmpNo)
+                    {
+                        var result = objMgr.DeleteShoppingCartByProduct("ADRS", eno);
 
+                        foreach (var val in cart1)
+                        {
+                            if (val.FProductId == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+
+                        foreach (var val in cart)
+                        {
+                            if (val.ShortName == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+                    }
+                }
+                if (enp_tab.IsSelected)
+                {
+                    foreach (string eno in lstSelectedEmpNo)
+                    {
+                        var result = objMgr.DeleteShoppingCartByProduct("e-Nautical Publications", eno);
+
+                        foreach (var val in cart1)
+                        {
+                            if (val.FProductId == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+
+                        foreach (var val in cart)
+                        {
+                            if (val.ShortName == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+                    }
+                }
+                if (misc_tab.IsSelected)
+                {
+                    foreach (string eno in lstSelectedEmpNo)
+                    {
+                        var result = objMgr.DeleteShoppingCartByProduct("Misc Publications", eno);
+
+                        foreach (var val in cart1)
+                        {
+                            if (val.FProductId == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+
+                        foreach (var val in cart)
+                        {
+                            if (val.ShortName == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+                    }
+                }
+                if (tides_tab.IsSelected)
+                {
+                    foreach (string eno in lstSelectedEmpNo)
+                    {
+                        var result = objMgr.DeleteShoppingCartByProduct("TotalTide", eno);
+
+                        foreach (var val in cart1)
+                        {
+                            if (val.FProductId == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+
+                        foreach (var val in cart)
+                        {
+                            if (val.ShortName == eno)
+                            {
+                                val.Exists = "NotExists";
+                            }
+                        }
+                    }
+                }
                 lstSelectedEmpNo.Clear();
 
                 Bindcheckpout();
@@ -7702,11 +7750,13 @@ namespace EWLDitital.PresentationLayer.Views
                 MessageBox.Show(ex.Message);
             }
         }
+        public bool avc = false;
         private void SelectAll_Click(object sender, RoutedEventArgs e)
         {
 
             if (avcs_tab.IsSelected)
             {
+                avc = true;
                 checkoutGrid.SelectAll();
                 lstSelectedEmpNo.Clear();
 
@@ -7787,22 +7837,6 @@ namespace EWLDitital.PresentationLayer.Views
                 {
                     var dog = item as DataRowView;
                     lstSelectedEmpNo.Add(dog["ShortName"].ToString());
-                }
-            }
-        }
-        private void ToggleButton_Click(object sender, RoutedEventArgs e)
-        {
-            DependencyObject obj = (DependencyObject)e.OriginalSource;
-            while (!(obj is DataGridRow) && obj != null) obj = VisualTreeHelper.GetParent(obj);
-            if (obj is DataGridRow)
-            {
-                if ((obj as DataGridRow).DetailsVisibility == Visibility.Visible)
-                {
-                    (obj as DataGridRow).IsSelected = false;
-                }
-                else
-                {
-                    (obj as DataGridRow).IsSelected = true;
                 }
             }
         }
@@ -7906,11 +7940,14 @@ namespace EWLDitital.PresentationLayer.Views
                 }
             }
 
-            foreach (DataRow drowToDelete in listRowsToDelete)
+            foreach (DataRow drowToDelete in listRowsToDelete.Distinct())
             {
-                dt1.Rows.Remove(drowToDelete);// Calling Remove is the same as calling Delete and then calling AcceptChanges
+                if (sa.Contains(drowToDelete["ShortName"].ToString()))
+                {
+                    dt1.Rows.Remove(drowToDelete);
+                    dt1.AcceptChanges();
+                }
             }
-            dt1.AcceptChanges();
 
             DataTable chkdt = new DataTable();
             chkdt = objCart.GetShoppingCartGroupBy();
@@ -8003,55 +8040,248 @@ namespace EWLDitital.PresentationLayer.Views
         }
         private void strsearch_Click(object sender, RoutedEventArgs e)
         {
-            //if (searchpnl.Visibility == Visibility.Visible)
-            //{
-            //    searchpnl.Visibility = Visibility.Hidden;
-            //}
-            //else
-            //{
-            //    searchpnl.Visibility = Visibility.Visible;
-            //}
+            txtSearch.Text = "";
+            SearchGrid.ItemsSource = null;
             ShowHideMenu("sbShowRightRoute", btnLeftMenuShow, pnlRightSearch);
 
         }
-
-       
         private void btnsearh_Click(object sender, RoutedEventArgs e)
         {
-            RemoveHeilight();
-            List<ShoppingCart> searchgrid = new List<ShoppingCart>();
-            List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
-            foreach (var item in MyMapView.GraphicsOverlays)
+            try
             {
-                if (item.Id != "seven" && item.Id!="Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay")
-                {
-                    grc.Add(item);
-                }
-            }
-            string serch = txtSearch.Text.ToUpper();
-            foreach (var ter in grc)
-            {
-                foreach (var item in ter.Graphics)
-                {
 
-                    if (item.Attributes["ShortName"].ToString().Contains(serch) || item.Attributes["Title"].ToString().Contains(serch))
-                    {
-                        //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
-                             searchgrid.Add(new ShoppingCart()
-                             {
-                                 ShortName = item.Attributes["ShortName"].ToString(),
-                                 Title = item.Attributes["Title"].ToString(),
-                                 Usage = item.Attributes["Usage"].ToString()
-                             });
-                    }
+
+                if (Maincat == "")
+                {
+                    MessageBox.Show("Please Selct the Product Category in Product Filter", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
                 }
+                RemoveHeilight();
+                List<ShoppingCart> searchgrid = new List<ShoppingCart>();
+                List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
+                
+               
+                
+
+                if (Maincat == "AVCS Chart")
+                {
+                    string serch = txtSearch.Text.ToLower();
+                    string s2 = "1,2,3,4,5,6";
+                    int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                    foreach (var item in MyMapView.GraphicsOverlays)
+                    {
+                        if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
+                        {
+                            if (selectedval.Contains(Convert.ToInt32(item.Id)))
+                            {
+                                grc.Add(item);
+                            }
+                        }
+                    }
+
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString().ToLower().Contains(serch) || item.Attributes["Title"].ToString().ToLower().Contains(serch))
+                            {
+                                //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                                searchgrid.Add(new ShoppingCart()
+                                {
+                                    ShortName = item.Attributes["ShortName"].ToString(),
+                                    Title = item.Attributes["Title"].ToString(),
+                                    Usage = item.Attributes["Usage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    SearchGrid.Visibility = Visibility.Visible;
+                    SearchGrid.ItemsSource = null;
+                    SearchGrid.ItemsSource = searchgrid.OrderBy(f => f.Usage);
+                }
+                if (Maincat == "AVCS Folio")
+                {
+                    string serch = txtSearch.Text.ToLower();
+                    string s2 = "7,8,9";
+                    int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                    foreach (var item in MyMapView.GraphicsOverlays)
+                    {
+                        if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
+                        {
+                            if (selectedval.Contains(Convert.ToInt32(item.Id)))
+                            {
+                                grc.Add(item);
+                            }
+                        }
+                    }
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString().ToLower().Contains(serch) || item.Attributes["Title"].ToString().ToLower().Contains(serch))
+                            {
+                                //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                                searchgrid.Add(new ShoppingCart()
+                                {
+                                    ShortName = item.Attributes["ShortName"].ToString(),
+                                    Title = item.Attributes["Title"].ToString(),
+                                    Usage = item.Attributes["Usage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    SearchGrid.Visibility = Visibility.Visible;
+                    SearchGrid.ItemsSource = null;
+                    SearchGrid.ItemsSource = searchgrid.OrderBy(f => f.Usage);
+                }
+                if (Maincat == "Digital List of Lights")
+                {
+                    string serch = txtSearch.Text.ToLower();
+                    foreach (var item in MyMapView.GraphicsOverlays)
+                    {
+                        if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
+                        {
+                            if (item.Id == "13")
+                            {
+                                grc.Add(item);
+                            }
+                        }
+                    }
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString().ToLower().Contains(serch) || item.Attributes["Title"].ToString().ToLower().Contains(serch))
+                            {
+                                //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                                searchgrid.Add(new ShoppingCart()
+                                {
+                                    ShortName = item.Attributes["ShortName"].ToString(),
+                                    Title = item.Attributes["Title"].ToString(),
+                                    Usage = item.Attributes["Usage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    SearchGrid.Visibility = Visibility.Visible;
+                    SearchGrid.ItemsSource = null;
+                    SearchGrid.ItemsSource = searchgrid.OrderBy(f => f.Usage);
+                }
+                if (Maincat == "Digital List of Radio Signals")
+                {
+                    string serch = txtSearch.Text.ToLower();
+                    string s2 = "10,11,12";
+                    int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                    foreach (var item in MyMapView.GraphicsOverlays)
+                    {
+                        if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
+                        {
+                            if (selectedval.Contains(Convert.ToInt32(item.Id)))
+                            {
+                                grc.Add(item);
+                            }
+                        }
+                    }
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString().ToLower().Contains(serch) || item.Attributes["Title"].ToString().ToLower().Contains(serch))
+                            {
+                                //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                                searchgrid.Add(new ShoppingCart()
+                                {
+                                    ShortName = item.Attributes["ShortName"].ToString(),
+                                    Title = item.Attributes["Title"].ToString(),
+                                    Usage = item.Attributes["Usage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    SearchGrid.Visibility = Visibility.Visible;
+                    SearchGrid.ItemsSource = null;
+                    SearchGrid.ItemsSource = searchgrid.OrderBy(f => f.Usage);
+                }
+                if (Maincat == "e-NP Sailing Direction")
+                {
+                    string serch = txtSearch.Text.ToLower();
+                    foreach (var item in MyMapView.GraphicsOverlays)
+                    {
+                        if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
+                        {
+                            if (item.Id == "14")
+                            {
+                                grc.Add(item);
+                            }
+                        }
+                    }
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString().ToLower().Contains(serch) || item.Attributes["Title"].ToString().ToLower().Contains(serch))
+                            {
+                                //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                                searchgrid.Add(new ShoppingCart()
+                                {
+                                    ShortName = item.Attributes["ShortName"].ToString(),
+                                    Title = item.Attributes["Title"].ToString(),
+                                    Usage = item.Attributes["Usage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    SearchGrid.Visibility = Visibility.Visible;
+                    SearchGrid.ItemsSource = null;
+                    SearchGrid.ItemsSource = searchgrid.OrderBy(f => f.Usage);
+                }
+                if (Maincat == "TotalTide")
+                {
+                    string serch = txtSearch.Text.ToLower();
+                    foreach (var item in MyMapView.GraphicsOverlays)
+                    {
+                        if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
+                        {
+                            if (item.Id == "15")
+                            {
+                                grc.Add(item);
+                            }
+                        }
+                    }
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString().ToLower().Contains(serch) || item.Attributes["Title"].ToString().ToLower().Contains(serch))
+                            {
+                                //SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                                searchgrid.Add(new ShoppingCart()
+                                {
+                                    ShortName = item.Attributes["ShortName"].ToString(),
+                                    Title = item.Attributes["Title"].ToString(),
+                                    Usage = item.Attributes["Usage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                    SearchGrid.Visibility = Visibility.Visible;
+                    SearchGrid.ItemsSource = null;
+                    SearchGrid.ItemsSource = searchgrid.OrderBy(f => f.Usage);
+                }
+
             }
-            SearchGrid.Visibility = Visibility.Visible;
-            SearchGrid.ItemsSource = null;
-            SearchGrid.ItemsSource = searchgrid;
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
 
         }
-
         public void ZoomToLocation(Graphic graphic, double scale)
         {
             MyMapView.SetViewpointGeometryAsync(graphic.Geometry);
@@ -8152,7 +8382,40 @@ namespace EWLDitital.PresentationLayer.Views
                 //}
                 //lstSelectedRoute.Clear();
 
-                BindRouteLine();
+                BindRouteLine("1");
+
+
+                //_sketchOverlay.Graphics.Clear();
+                //_sketchPolylineOverlay.Graphics.Clear();
+                //_sketchRouteOverlay.Graphics.Clear();
+                //_sketchRouteOverlay1.Graphics.Clear();
+                //_polypointrouteOverlay.Graphics.Clear();
+
+                routelineconfigclear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void RouteRemove_Click1(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+
+                string aa = (RouteGrid1.SelectedItem as DataRowView).Row["RouteName"].ToString();
+                objMgr.DeleteRouteLineDetailsByName(aa);
+                var result = objMgr.DeleteRouteLineByName(aa);
+                //foreach (string eno in lstSelectedRoute)
+                //{
+                //    objMgr.DeleteRouteLineDetailsByName(eno);
+                //    var result = objMgr.DeleteRouteLineByName(eno);
+
+                //}
+                //lstSelectedRoute.Clear();
+
+                BindRouteLine("2");
 
 
                 //_sketchOverlay.Graphics.Clear();
@@ -8172,36 +8435,116 @@ namespace EWLDitital.PresentationLayer.Views
         {
             RemoveHeilight();
             ShoppingCart row = (ShoppingCart)((Button)e.Source).DataContext;
-
+           
             List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
             foreach (var item in MyMapView.GraphicsOverlays)
             {
-                if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay")
+                if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
                 {
                     grc.Add(item);
                 }
             }
             string serch = row.ShortName.ToString();
-            foreach (var ter in grc)
-            {
-                foreach (var item in ter.Graphics)
-                {
 
-                    if (item.Attributes["ShortName"].ToString() == serch)
+            if (Maincat == "AVCS Chart")
+            {
+                string s2 = "1,2,3,4,5,6";
+                int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
                     {
-                        SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+
+                        if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
+                    }
+                }
+            }
+            if (Maincat == "AVCS Folio")
+            {
+                string s2 = "7,8,9";
+                int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
+                    {
+
+                        if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
+                    }
+                }
+            }
+            if (Maincat == "Digital List of Lights")
+            {
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
+                    {
+
+                        if (item.Attributes["ShortName"].ToString() == serch && Convert.ToInt32(item.Attributes["Usage"].ToString()) == 13)
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
+                    }
+                }
+            }
+            if (Maincat == "Digital List of Radio Signals")
+            {
+                string s2 = "10,11,12";
+                int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
+                    {
+
+                        if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
+                    }
+                }
+            }
+            if (Maincat == "e-NP Sailing Direction")
+            {
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
+                    {
+
+                        if (item.Attributes["ShortName"].ToString() == serch && Convert.ToInt32(item.Attributes["Usage"].ToString()) == 14)
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
+                    }
+                }
+            }
+            if (Maincat == "TotalTide")
+            {
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
+                    {
+
+                        if (item.Attributes["ShortName"].ToString() == serch && Convert.ToInt32(item.Attributes["Usage"].ToString()) == 15)
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
                     }
                 }
             }
         }
         public void SetZoomScaleAndHieghlight(int key, Graphic item1)
         {
-            var li1 = new[] { 10000, 62500, 125000 };
-            var li2 = new[] { 125000, 250000, 500000 };
-            var li3 = new[] { 500000, 1000000, 2000000 };
-            var li4 = new[] { 2000000, 4000000, 8000000 };
-            var li5 = new[] { 8000000, 16000000, 32000000 };
-            var li6 = new[] { 32000000, 64000000, 128000000 };
+            var li1 = new[] { 10000, 62500 };
+            var li2 = new[] { 125000, 250000 };
+            var li3 = new[] { 500000, 1000000 };
+            var li4 = new[] { 2000000, 4000000 };
+            var li5 = new[] { 8000000, 16000000 };
+            var li6 = new[] { 32000000, 64000000 };
             var tes1 = MyMapView.GetCurrentViewpoint(ViewpointType.CenterAndScale);
 
             var list = new[] { 10000, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000, 32000000, 64000000, 128000000 };
@@ -8425,12 +8768,12 @@ namespace EWLDitital.PresentationLayer.Views
 
         public void SetZoomScale(int key, Graphic item1)
         {
-            var li1 = new[] { 10000, 62500, 125000 };
-            var li2 = new[] { 125000, 250000, 500000 };
-            var li3 = new[] { 500000, 1000000, 2000000 };
-            var li4 = new[] { 2000000, 4000000, 8000000 };
-            var li5 = new[] { 8000000, 16000000, 32000000 };
-            var li6 = new[] { 32000000, 64000000, 128000000 };
+            var li1 = new[] { 10000, 62500 };
+            var li2 = new[] { 125000, 250000 };
+            var li3 = new[] { 500000, 1000000 };
+            var li4 = new[] { 2000000, 4000000 };
+            var li5 = new[] { 8000000, 16000000 };
+            var li6 = new[] { 32000000, 64000000 };
             var tes1 = MyMapView.GetCurrentViewpoint(ViewpointType.CenterAndScale);
 
             var list = new[] { 10000, 62500, 125000, 250000, 500000, 1000000, 2000000, 4000000, 8000000, 16000000, 32000000, 64000000, 128000000 };
@@ -8684,25 +9027,31 @@ namespace EWLDitital.PresentationLayer.Views
         private void folioSearch_Click(object sender, RoutedEventArgs e)
         {
             RemoveHeilight();
-            ShoppingCart row = (ShoppingCart)((Button)e.Source).DataContext;
+            Temperatures row = (Temperatures)((Button)e.Source).DataContext;
 
             List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
             foreach (var item in MyMapView.GraphicsOverlays)
             {
-                if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay")
+                if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
                 {
                     grc.Add(item);
                 }
             }
-            string serch = row.ShortName.ToString();
-            foreach (var ter in grc)
-            {
-                foreach (var item in ter.Graphics)
-                {
+            string serch = row.FProductId.ToString();
 
-                    if (item.Attributes["ShortName"].ToString() == serch)
+            if (Maincat == "AVCS Folio")
+            {
+                string s2 = "7,8,9";
+                int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                foreach (var ter in grc)
+                {
+                    foreach (var item in ter.Graphics)
                     {
-                        SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+
+                        if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                        {
+                            SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        }
                     }
                 }
             }
@@ -8714,6 +9063,11 @@ namespace EWLDitital.PresentationLayer.Views
         private void SaveRoutehide_Click(object sender, RoutedEventArgs e)
         {
             SaveRouteName.Visibility = Visibility.Hidden;
+        }
+
+        private void SaveRoutehide_Click1(object sender, RoutedEventArgs e)
+        {
+            SaveRouteName1.Visibility = Visibility.Hidden;
         }
 
         private async Task<PictureMarkerSymbol> getpic1()//for middle circles in polyline
@@ -8730,8 +9084,8 @@ namespace EWLDitital.PresentationLayer.Views
             SketchStyle srt = new SketchStyle();
             var item = srt.MidVertexSymbol.CreateSwatchAsync(96);
 
-            pictureMarkerSym.Width = 15;
-            pictureMarkerSym.Height = 15;
+            pictureMarkerSym.Width = 10;
+            pictureMarkerSym.Height = 10;
             pictureMarkerSym.LeaderOffsetX = 0;
             pictureMarkerSym.OffsetY = 0;
             pictureMarkerSym.Angle = 90;
@@ -8741,8 +9095,7 @@ namespace EWLDitital.PresentationLayer.Views
         private async void sketchEditor()
         {
             // string stnme=
-            //string stopName = $"W";
-            string stopName = "";
+            string stopName = "";//add this
             // polist.WaypointCount = _sketchRouteOverlay.Graphics.Count + 1;
 
             MyMapView.SketchEditor.Style.ShowNumbersForVertices = false;
@@ -8791,14 +9144,14 @@ namespace EWLDitital.PresentationLayer.Views
         }
         private Graphic Rightpanel_polygon_selection(Graphic graphic)
         {
-            graphic.Symbol = new SimpleFillSymbol(SimpleFillSymbolStyle.Solid, System.Drawing.Color.FromArgb(0, 0, 0, 255),
+            graphic.Symbol = new SimpleFillSymbol(SimpleFillSymbolStyle.Solid, System.Drawing.Color.FromArgb(70, 0, 0, 255),
                             new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(0, 0, 255), 2));
             return graphic;
         }
 
         private Graphic Search_polygon_selection(Graphic graphic)
         {
-            graphic.Symbol = new SimpleFillSymbol(SimpleFillSymbolStyle.Solid, System.Drawing.Color.FromArgb(0, 225, 56, 255),
+            graphic.Symbol = new SimpleFillSymbol(SimpleFillSymbolStyle.Solid, System.Drawing.Color.FromArgb(70, 225, 56, 255),
                             new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(225, 56, 255), 2.5));
             return graphic;
         }
@@ -8840,28 +9193,114 @@ namespace EWLDitital.PresentationLayer.Views
 
         private void btnrightsearh_Click(object sender, RoutedEventArgs e)
         {
-            RemoveHeilight();
-            ShoppingCart row = (ShoppingCart)((Button)e.Source).DataContext;
-
-            List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
-            foreach (var item in MyMapView.GraphicsOverlays)
+            try
             {
-                if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay")
-                {
-                    grc.Add(item);
-                }
-            }
-            string serch = row.ShortName.ToString();
-            foreach (var ter in grc)
-            {
-                foreach (var item in ter.Graphics)
-                {
+                RemoveHeilight();
+                ShoppingCart row = (ShoppingCart)((Button)e.Source).DataContext;
 
-                    if (item.Attributes["ShortName"].ToString() == serch)
+                List<GraphicsOverlay> grc = new List<GraphicsOverlay>();
+                foreach (var item in MyMapView.GraphicsOverlays)
+                {
+                    if (item.Id != "seven" && item.Id != "Portoverlay" && item.Id != "greenPortoverlay" && item.Id != "redPortoverlay" && item.Id != "_sketchRectOverlay")
                     {
-                        SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                        grc.Add(item);
                     }
                 }
+                string serch = row.ShortName.ToString();
+                if (Maincat == "AVCS Chart")
+                {
+                    string s2 = "1,2,3,4,5,6";
+                    int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                            {
+                                SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                            }
+                        }
+                    }
+                }
+                if (Maincat == "AVCS Folio")
+                {
+                    string s2 = "7,8,9";
+                    int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                            {
+                                SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                            }
+                        }
+                    }
+                }
+                if (Maincat == "Digital List of Lights")
+                {
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString() == serch && Convert.ToInt32(item.Attributes["Usage"].ToString()) == 13)
+                            {
+                                SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                            }
+                        }
+                    }
+                }
+                if (Maincat == "Digital List of Radio Signals")
+                {
+                    string s2 = "10,11,12";
+                    int[] selectedval = Array.ConvertAll(s2.Split(','), s => int.Parse(s));
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString() == serch && selectedval.Contains(Convert.ToInt32(item.Attributes["Usage"].ToString())))
+                            {
+                                SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                            }
+                        }
+                    }
+                }
+                if (Maincat == "e-NP Sailing Direction")
+                {
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString() == serch && Convert.ToInt32(item.Attributes["Usage"].ToString()) == 14)
+                            {
+                                SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                            }
+                        }
+                    }
+                }
+                if (Maincat == "TotalTide")
+                {
+                    foreach (var ter in grc)
+                    {
+                        foreach (var item in ter.Graphics)
+                        {
+
+                            if (item.Attributes["ShortName"].ToString() == serch && Convert.ToInt32(item.Attributes["Usage"].ToString()) == 15)
+                            {
+                                SetZoomScaleAndHieghlight(Convert.ToInt32(item.Attributes["Usage"].ToString()), item);
+                            }
+                        }
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message,"Error",MessageBoxButton.OK,MessageBoxImage.Error);
             }
         }
 
@@ -8869,75 +9308,134 @@ namespace EWLDitital.PresentationLayer.Views
         {
             ShowHideMenu("sbHideRightRoute", btnLeftMenuShow, pnlRightSearch);
         }
-        private Esri.ArcGISRuntime.Geometry.Geometry loadrouteline_geom_create(List<MapPoint> PointCollection)//add this method
-        {
-            var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(PointCollection);
-            Esri.ArcGISRuntime.Geometry.Geometry geom = polyline;
-            return geom;
-
-        }
         private async void EditButton_Click(object sender, RoutedEventArgs e)
         {
-            savemenu.IsEnabled = true;
-            _sketchOverlay.Graphics.Clear();
-            routewaypointoverlay.Graphics.Clear();
-            MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
-            savemenu.IsEnabled = true;
-            Esri.ArcGISRuntime.Geometry.PointCollection databasepointcollection_web = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
-            List<MapPoint> databasepointslist = new List<MapPoint>();
-
-            DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
-            DataTable dt = new DataTable();
-            dt = objRout.GetRouteLineDetails(SelectedRoutName);
-
-            for (int i = 0; i < dt.Rows.Count; i++)
+            if (SelectedRoutName == "" && importedlinepoints.Count > 0)
             {
-                var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
-                var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
-                MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
-                databasepointcollection_web.Add(latit, longit);
-                databasepointslist.Add(mp1);
-            }
-
-
-            var l1 = loadrouteline_create(databasepointcollection_web);
-            var editPolyline1 = l1 as Polyline;
-            this.editlinebuilder = new PolylineBuilder(editPolyline1);
-            var item2geom = loadrouteline_geom_create_new(databasepointcollection_web);
-            try
-            {
-                if (editlinebuilder.Parts.Count > 1)
+                try
                 {
-
-                    var config = new SketchEditConfiguration()
+                    savemenu.IsEnabled = true;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                    Mouse.OverrideCursor = Cursors.Cross;
+                    savemenu.IsEnabled = true;
+                    // Esri.ArcGISRuntime.Geometry.PointCollection databasepointcollection_web = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+                    // List<MapPoint> databasepointslist = new List<MapPoint>();
+                    var l1 = loadrouteline_create(normalizedimportedpoints);
+                    var editPolyline1 = l1 as Polyline;
+                    this.editlinebuilder = new PolylineBuilder(editPolyline1);
+                    var item2geom = loadrouteline_geom_create_new(normalizedimportedpoints);
+                    var editPolyline2 = item2geom as Polyline;//add this
+                    if (editlinebuilder.Parts.Count > 1)
                     {
-                        AllowVertexEditing = true,
-                        AllowMove = true,
-                        AllowRotate = false,
 
-                        ResizeMode = SketchResizeMode.None
-                    };
-                    sketchEditor();
-                    Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(item2geom);
-                }
-                else
-                {
-                    var config = new SketchEditConfiguration()
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
+
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline2);
+                    }
+                    else
                     {
-                        AllowVertexEditing = true,
-                        AllowMove = true,
-                        AllowRotate = false,
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
 
-                        ResizeMode = SketchResizeMode.None
-                    };
-                    sketchEditor();
-                    Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(l1);
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline1);// add this
+
+                    }
 
                 }
+                catch (TaskCanceledException)
+                {
+                    // Ignore ... let the user cancel editing
+                }
+
+
             }
-            catch (TaskCanceledException)
+            else
             {
-                // Ignore ... let the user cancel editing
+
+
+                try
+                {
+                    savemenu.IsEnabled = true;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+                    Mouse.OverrideCursor = Cursors.Cross;
+                    savemenu.IsEnabled = true;
+                    Esri.ArcGISRuntime.Geometry.PointCollection databasepointcollection_web = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+                    List<MapPoint> databasepointslist = new List<MapPoint>();
+
+                    DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
+                    DataTable dt = new DataTable();
+                    dt = objRout.GetRouteLineDetails(SelectedRoutName);
+
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+
+
+                        var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                        var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+                        MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
+                        databasepointcollection_web.Add(latit, longit);
+                        databasepointslist.Add(mp1);
+
+
+                    }
+
+
+                    var l1 = loadrouteline_create(databasepointcollection_web);
+                    var editPolyline1 = l1 as Polyline;
+                    this.editlinebuilder = new PolylineBuilder(editPolyline1);
+                    var item2geom = loadrouteline_geom_create_new(databasepointcollection_web);
+                    var editPolyline2 = item2geom as Polyline;//add this
+
+                    if (editlinebuilder.Parts.Count > 1)
+                    {
+
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
+
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline2);
+                    }
+                    else
+                    {
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
+
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline1);// add this
+
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    // Ignore ... let the user cancel editing
+                }
             }
         }
         private Esri.ArcGISRuntime.Geometry.Geometry loadrouteline_geom_create_new(Esri.ArcGISRuntime.Geometry.PointCollection pc)//add this method
@@ -8963,51 +9461,6 @@ namespace EWLDitital.PresentationLayer.Views
             }
         }
 
-        private void mylistbox_MouseEnter(object sender, MouseEventArgs e)
-        {
-            ListBoxItem Item = sender as ListBoxItem;
-            ListViewItem Item1 = sender as ListViewItem;
-            //string str = (sender as ListBoxItem).Content.ToString();
-
-            //if (mylistbox.Items.Count > 1)
-            //{
-            //    List<GraphicsOverlay> graphicoverlaycollection = new List<GraphicsOverlay>();
-            //    var ter = MyMapView.GraphicsOverlays;
-            //    foreach (var items in ter)
-            //    {
-            //        graphicoverlaycollection.Add(items);
-            //    }
-
-            //    foreach (var items in graphicoverlaycollection)
-            //    {
-            //        foreach (var item1 in items.Graphics)
-            //        {
-            //            string named = item1.Attributes.Keys.FirstOrDefault();
-            //            if (mylistbox.Items.Cast<ListBoxItem>().Any(x => x.Content.ToString() == named) && !cart.Any(x => x.ShortName == named) && !cart1.Any(x => x.FProductId == named))
-            //            {
-            //                if (!item1.IsSelected)
-            //                {
-            //                    if (str == named)
-            //                    {
-            //                        item1.IsSelected = true;
-            //                        Rightpanel_polygon_selection(item1);
-            //                    }
-            //                }
-            //                else
-            //                {
-            //                    if (str == named)
-            //                    {
-            //                        item1.IsSelected = false;
-            //                        Mouse_Tap_Unselect(item1);
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-        }
-
         private void mylistbox_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             try
@@ -9028,7 +9481,7 @@ namespace EWLDitital.PresentationLayer.Views
                     var ter = MyMapView.GraphicsOverlays;
                     foreach (var items in ter)
                     {
-                        if (items.Id != "seven" && items.Id != "Portoverlay" && items.Id != "greenPortoverlay" && items.Id != "redPortoverlay")
+                        if (items.Id != "seven" && items.Id != "Portoverlay" && items.Id != "greenPortoverlay" && items.Id != "redPortoverlay" && items.Id != "_sketchRectOverlay")
                         {
                             graphicoverlaycollection.Add(items);
                         }
@@ -9054,18 +9507,9 @@ namespace EWLDitital.PresentationLayer.Views
                                 }
                                 else
                                 {
-
                                     item1.IsSelected = false;
-                                    if (checkout.Any(x => x.ShortName == named))
-                                    {
-                                        Mouse_tap_AddedCart(item1);
-                                    }
-                                    else
-                                    {
-                                        Mouse_Tap_Unselect(item1);
-                                    }
-                                    
-                                    
+                                    selection(named, item1);
+
                                 }
                             }
                             else
@@ -9082,28 +9526,14 @@ namespace EWLDitital.PresentationLayer.Views
                                         }
                                         else
                                         {
-                                            if (checkout.Any(x => x.ShortName == named))
-                                            {
-                                                Mouse_tap_AddedCart(item1);
-                                            }
-                                            else
-                                            {
-                                                Mouse_tap_select(item1);
-                                            }
+                                            selection(named, item1);
                                         }
                                     }
                                 }
                                 else
                                 {
                                     item1.IsSelected = false;
-                                    if (checkout.Any(x => x.ShortName == named))
-                                    {
-                                        Mouse_tap_AddedCart(item1);
-                                    }
-                                    else
-                                    {
-                                        Mouse_Tap_Unselect(item1);
-                                    }
+                                    selection(named, item1);
                                 }
                             }
                         }
@@ -9117,7 +9547,75 @@ namespace EWLDitital.PresentationLayer.Views
                 MessageBox.Show(ex.Message);
             }
         }
-
+        public void selection (string named ,Graphic item1)
+        {
+            if (Maincat == "AVCS Chart")
+            {
+                if (checkout.Any(x => x.ShortName == named && x.ProductName == "AVCS Products"))
+                {
+                    Mouse_tap_AddedCart(item1);
+                }
+                else
+                {
+                    Mouse_Tap_Unselect(item1);
+                }
+            }
+            if (Maincat == "AVCS Folio")
+            {
+                if (checkout.Any(x => x.ShortName == named && x.ProductName == "AVCS Products"))
+                {
+                    Mouse_tap_AddedCart(item1);
+                }
+                else
+                {
+                    Mouse_Tap_Unselect(item1);
+                }
+            }
+            if (Maincat == "Digital List of Lights")
+            {
+                if (checkout.Any(x => x.ShortName == named && x.ProductName == "ADLL"))
+                {
+                    Mouse_tap_AddedCart(item1);
+                }
+                else
+                {
+                    Mouse_Tap_Unselect(item1);
+                }
+            }
+            if (Maincat == "Digital List of Radio Signals")
+            {
+                if (checkout.Any(x => x.ShortName == named && x.ProductName == "ADRS"))
+                {
+                    Mouse_tap_AddedCart(item1);
+                }
+                else
+                {
+                    Mouse_Tap_Unselect(item1);
+                }
+            }
+            if (Maincat == "e-NP Sailing Direction")
+            {
+                if (checkout.Any(x => x.ShortName == named && x.ProductName == "e-Nautical Publications"))
+                {
+                    Mouse_tap_AddedCart(item1);
+                }
+                else
+                {
+                    Mouse_Tap_Unselect(item1);
+                }
+            }
+            if (Maincat == "TotalTide")
+            {
+                if (checkout.Any(x => x.ShortName == named && x.ProductName == "TotalTide"))
+                {
+                    Mouse_tap_AddedCart(item1);
+                }
+                else
+                {
+                    Mouse_Tap_Unselect(item1);
+                }
+            }
+        }
         private void mylistbox_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             try
@@ -9135,13 +9633,11 @@ namespace EWLDitital.PresentationLayer.Views
                 if (mylistbox.Items.Count > 1)
                 {
 
-
-
                     List<GraphicsOverlay> graphicoverlaycollection = new List<GraphicsOverlay>();
                     var ter = MyMapView.GraphicsOverlays;
                     foreach (var items in ter)
                     {
-                        if (items.Id != "seven" && items.Id != "Portoverlay" && items.Id != "greenPortoverlay" && items.Id != "redPortoverlay")
+                        if (items.Id != "seven" && items.Id != "Portoverlay" && items.Id != "greenPortoverlay" && items.Id != "redPortoverlay" && items.Id != "_sketchRectOverlay")
                         {
                             graphicoverlaycollection.Add(items);
                         }
@@ -9167,7 +9663,7 @@ namespace EWLDitital.PresentationLayer.Views
                                     {
                                         cart.Remove(itemToRemove);
                                     }
-                                    objMgr.DeleteShoppingCartByProduct(str);
+                                    objMgr.DeleteShoppingCartByProduct("AVCS Products", str);
                                     dataGrid1.ItemsSource = null;
                                     dataGrid1.ItemsSource = cart.OrderByDescending(f => f.Id); ;
 
@@ -9182,7 +9678,7 @@ namespace EWLDitital.PresentationLayer.Views
                                     {
                                         cart1.Remove(itemToRemove);
                                     }
-                                    objMgr.DeleteShoppingCartByProduct(str);
+                                    objMgr.DeleteShoppingCartByProduct("AVCS Products",str);
                                     dataGrid2.ItemsSource = null;
                                     dataGrid2.ItemsSource = cart1.OrderByDescending(f => f.Id);
                                     return;
@@ -9196,7 +9692,7 @@ namespace EWLDitital.PresentationLayer.Views
                                     {
                                         cart.Remove(itemToRemove);
                                     }
-                                    objMgr.DeleteShoppingCartByProduct(str);
+                                    objMgr.DeleteShoppingCartByProduct("ADRS",str);
                                     dataGrid1.ItemsSource = null;
                                     dataGrid1.ItemsSource = cart.OrderByDescending(f => f.Id); ;
                                 }
@@ -9215,11 +9711,1016 @@ namespace EWLDitital.PresentationLayer.Views
             }
         }
 
-        
+
+        private async void geodetic_line(object sender, RoutedEventArgs e)
+        {
+            _sketchOverlay.Graphics.Clear();
+            routewaypointoverlay.Graphics.Clear();
+            UnderRoot1.IsEnabled = false;
+            geodesic_points.Clear();
+            symbolspointslist_savebtn.Clear();
+            Mouse.OverrideCursor = Cursors.Cross;
+            savemenu1.IsEnabled = true;
+            MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+            // Add a graphic at JFK to serve as the origin.
+            // MyMapView.GeoViewTapped += MyMapViewOn_GeoView_Tapped_new;
+            try
+            {
+                var config = new SketchEditConfiguration()
+                {
+                    AllowVertexEditing = true,
+                    AllowMove = true,
+                    AllowRotate = false,
+
+                    ResizeMode = SketchResizeMode.None
+                };
+                sketchEditor();
+
+                // Let the user draw on the map view using the chosen sketch mode
+                SketchCreationMode creationMode = SketchCreationMode.Polyline;
+                Esri.ArcGISRuntime.Geometry.Geometry geometry = await MyMapView.SketchEditor.StartAsync(creationMode, true);
+            }
+            catch (Exception ex)
+            {
+               // MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            //  Mouse.OverrideCursor = Cursors.Arrow;
+        }
+        private async void MyMapViewOn_GeoView_Tapped_new(object sender, GeoViewInputEventArgs geoViewInputEventArgs)
+        {
+            var config = new SketchEditConfiguration()
+            {
+                AllowVertexEditing = true,
+                AllowMove = true,
+                AllowRotate = false,
+
+                ResizeMode = SketchResizeMode.None
+            };
+            sketchEditor();
+
+            // Let the user draw on the map view using the chosen sketch mode
+            SketchCreationMode creationMode = SketchCreationMode.Polyline;
+            Esri.ArcGISRuntime.Geometry.Geometry geometry = await MyMapView.SketchEditor.StartAsync(creationMode, true);
+        }
+        PolylineBuilder builder = new PolylineBuilder(SpatialReferences.Wgs84);
+        List<MapPoint> symbolspointslist_savebtn = new List<MapPoint>();
+        Esri.ArcGISRuntime.Geometry.PointCollection geodesic_points = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+        Esri.ArcGISRuntime.Geometry.PointCollection geodesic_savbtnpoints_webmerccollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+        private void MyMapViewOnGeoViewTapped(object sender, GeoViewInputEventArgs geoViewInputEventArgs)
+        {
+
+            MapPoint start = new MapPoint(geoViewInputEventArgs.Location.X, geoViewInputEventArgs.Location.Y, SpatialReferences.WebMercator);
+            SimpleMarkerSymbol startMarker = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, System.Drawing.Color.Blue, 10);
+            var start_transform = (MapPoint)GeometryEngine.Project(start, SpatialReference.Create(4326));
+            var start_graphic = new Graphic(start_transform, startMarker);
+            _sketchOverlay.Graphics.Add(start_graphic);
+
+            geodesic_points.Add(start_transform);
+            symbolspointslist_savebtn.Add(start_transform);
+            geodesic_savbtnpoints_webmerccollection.Add(start);
+
+            if (geodesic_points.Count > 1)
+            {
+                Polyline routeLine1 = new Polyline(geodesic_points);
+                GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesic_points.ElementAt(0), geodesic_points.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesic_points.ElementAt(0), geodesic_points.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
+                var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
+                var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
+
+                if (loxodromeMeasureResult.Distance <= 400)
+                {
+                    Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
+                    var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                    var pathgraphic = new Graphic(pathGeometry1, linesym);
+                    pathgraphic.Attributes["ShortName"] = loxdres.ToString() + " " + "NM";
+                    // pathgraphic.Attributes["ShortName_"] = loxodromeMeasureResult.AzimuthUnit.ToString() + " " + "T";
+                    //routewaypointoverlay.Graphics.Add(pathgraphic);
+                    _sketchOverlay.Graphics.Add(pathgraphic);
+                    route_symbolsadding_pointcollection(geodesic_points);
+                    geodesic_points.RemoveAt(0);
+                    // symbolspointslist.RemoveAt(0);
+                }
+                else
+                {
+                    // Densify the polyline to show the geodesic curve.
+                    Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
+                    var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                    var pathgraphic = new Graphic(pathGeometry1, linesym);
+                    pathgraphic.Attributes["ShortName"] = loxdres1.ToString() + " " + "NM";
+                    // pathgraphic.Attributes["ShortName_"] = loxodromeMeasureResult1.AzimuthUnit.ToString() + " " + "T";
+                    // routewaypointoverlay.Graphics.Add(pathgraphic);
+                    _sketchOverlay.Graphics.Add(pathgraphic);
+                    route_symbolsadding_pointcollection(geodesic_points);
+                    geodesic_points.RemoveAt(0);
+                    // symbolspointslist.RemoveAt(0);
+                }
+
+            }
+        }
+        private void Geodetic_RouteGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            routewaypointoverlay.Graphics.Clear();
+            _sketchOverlay.Graphics.Clear();
+            symbolspointslist_savebtn.Clear();
+            List<MapPoint> geodeticloadpoints = new List<MapPoint>();
+            Esri.ArcGISRuntime.Geometry.PointCollection geodeticPointCollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
+
+
+            if (e.AddedItems != null && e.AddedItems.Count > 0)
+            {
+                string aa = (RouteGrid1.SelectedItem as DataRowView).Row["RouteName"].ToString();
+                SelectedRoutName = aa;
+                lstSelectedRoute.Add(aa);
+                DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
+                DataTable dt = new DataTable();
+                dt = objCart.GetRouteLineDetails(aa);
+                foreach (DataRow row1 in dt.Rows)
+                {
+                    polist.latitude = Convert.ToDouble(row1["Latitude"]);
+                    polist.longitude = Convert.ToDouble(row1["Longitude"]);
+
+                    MapPoint mp = new MapPoint(polist.latitude, polist.longitude, SpatialReferences.WebMercator);
+
+                    geodeticPointCollection.Add(mp);
+                    geodeticloadpoints.Add(mp);
+
+                }
+            }
+            for (int i = 0; i < geodeticPointCollection.Count; i++)
+            {
+                if (i + 1 == geodeticPointCollection.Count + 1)
+                {
+
+                    break;
+
+                }
+                else
+                {
+                    MapPoint loadstartpoint = new MapPoint(geodeticPointCollection[i].X, geodeticPointCollection[i].Y, SpatialReferences.WebMercator);
+                    var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
+                    geodesicload_pointlist.Add(start_transform);
+
+
+
+                    if (geodesicload_pointlist.Count > 1)
+                    {
+                        GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                        GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
+                        var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
+                        var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
+                        if (loxodromeMeasureResult.Distance <= 400)
+                        {
+                            Polyline routeLine2 = new Polyline(geodesicload_pointlist);
+                            // Densify the polyline to show the geodesic curve.
+                            Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
+                            var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                            var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
+                            _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "Kn";
+                            _sketchOverlay.Graphics.Add(_pathGraphic1);
+                            // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                            //  route_symbolsadding(geodesicload_pointlist);
+                            // builder.AddPart(geodesicpointlist);
+                            geodesicload_pointlist.RemoveAt(0);
+
+                        }
+                        else
+                        {
+                            Polyline routeLine2 = new Polyline(geodesicload_pointlist);
+                            // Densify the polyline to show the geodesic curve.
+                            Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
+                            var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                            var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
+                            _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "Kn";
+                            _sketchOverlay.Graphics.Add(_pathGraphic2);
+                            // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                            // route_symbolsadding(geodesicload_pointlist);
+                            // builder.AddPart(geodesicpointlist);
+                            geodesicload_pointlist.RemoveAt(0);
+                        }
+                        //Polyline routeLine1 = new Polyline(geodesicload_pointlist);
+                        //Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
+                        // var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                        // var graphic_new = new Graphic(pathGeometry1, polys3);
+                        // _sketchOverlay.Graphics.Add(graphic_new);
+                        // geodesicload_pointlist.RemoveAt(0);
+                    }
+                    //route_symbolsadding_pointcollection(geodeticPointCollection);
+                    //var x1 = borderCountryPointCollection[i].X;
+                    //var x2 = borderCountryPointCollection[i+1].X;
+
+                }
+
+
+            }
+            route_symbolsadding(geodeticloadpoints);
+            //  geom = loadrout
+
+        }
+
+        private async void route_symbolsadding_pointcollection(Esri.ArcGISRuntime.Geometry.PointCollection geodesic_points)
+        {
+            try
+            {
+
+                foreach (var tem in geodesic_points)
+                {
+                    polist.polylinepointcollection = null;
+                    switch (SampleState.AddingStops)
+                    {
+                        case SampleState.AddingStops:
+                            // Get the name of this stmop.
+                            string stopName = $"W{routewaypointoverlay.Graphics.Count + 1 }";
+                            // polist.WaypointCount = _sketchRouteOverlay.Graphics.Count + 1;
+                            // Create the marker to show underneath the stop number.
+                            PictureMarkerSymbol pushpinMarker = await GetPictureMarker();
+
+                            polist.latitude = tem.X;
+                            polist.longitude = tem.Y;
+
+
+                            TextSymbol stopSymbol = new TextSymbol(stopName, System.Drawing.Color.Transparent, 15,
+                                Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Right, Esri.ArcGISRuntime.Symbology.VerticalAlignment.Top);
+                            stopSymbol.OffsetY = 0;
+
+                            CompositeSymbol combinedSymbol = new CompositeSymbol(new MarkerSymbol[] { pushpinMarker, stopSymbol });
+
+                            Graphic stopGraphic = new Graphic(tem, combinedSymbol);
+                            // Graphic stopGraphic = new Graphic(tem);
+                            stopGraphic.Attributes["ShortName"] = stopName;
+                            routewaypointoverlay.Graphics.Add(stopGraphic);
+                            break;
+                    }
+
+                }
+            }
+            catch
+            {
+
+            }
+            // Normalize geometry - important for geometries that will be sent to a server for processing.
+            //mapLocation = (MapPoint)GeometryEngine.NormalizeCentralMeridian(mapLocation);
+            // var ste = Mapcoordinates_Change(mapLocation);
+        }
+
+
+        private async void Geodetic_EditRoot_Click(object sender, RoutedEventArgs e)
+        {
+            // densifyandgeneralize();
+            symbolspointslist_savebtn.Clear();//add this line
+            UnderRoot1.IsEnabled = false;
+            if (SelectedRoutName == "" && importedlinepoints.Count > 0)
+            {
+                try
+                {
+                    savemenu1.IsEnabled = true;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+
+                    Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+
+                    for (int i = 0; i < importedlinepoints.Count; i++)
+                    {
+                        if (i + 1 == importedlinepoints.Count + 1)
+                        {
+
+                            break;
+
+                        }
+                        else
+                        {
+                            // var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                            // var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+                            // MapPoint mp2 = importedlinepoints[i];
+                            MapPoint mp1 = new MapPoint(importedlinepoints[i].X, importedlinepoints[i].Y, SpatialReferences.Wgs84);
+                            MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(3857));
+                            geodetcipointcollection_webmerc.Add(mp1_aftertransfor);
+                        }
+                    }
+
+                    var l1 = loadrouteline_create(normalizedimportedpoints);
+                    var editPolyline1 = l1 as Polyline;
+                    this.editlinebuilder = new PolylineBuilder(editPolyline1);
+                    var item2geom = loadrouteline_geom_create_new(normalizedimportedpoints);
+                    var editPolyline2 = item2geom as Polyline;//add this
+
+                    if (editlinebuilder.Parts.Count > 1)
+                    {
+
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
+
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline2);
+                    }
+                    else
+                    {
+                        var config = new SketchEditConfiguration()
+                        {
+                            AllowVertexEditing = true,
+                            AllowMove = true,
+                            AllowRotate = false,
+
+                            ResizeMode = SketchResizeMode.None
+                        };
+                        sketchEditor();
+                        Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(editPolyline1);// add this
+
+                    }
+
+
+                    // var l2 = loadrouteline_create(importedlinepoints);
+                    // var editPolyline3 = l1 as Polyline;
+                    // this.editlinebuilder = new PolylineBuilder(editPolyline1);
+
+
+
+                    // var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
+                    // Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
+
+                    // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
+
+                }
+                catch (TaskCanceledException)
+                {
+                    // Ignore ... let the user cancel editing
+                }
+
+            }
+            else
+            {
+
+
+                try
+                {
+                    savemenu1.IsEnabled = true;
+                    _sketchOverlay.Graphics.Clear();
+                    routewaypointoverlay.Graphics.Clear();
+                    MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+
+                    Esri.ArcGISRuntime.Geometry.PointCollection geodetcipointcollection_webmerc = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
+
+                    DataAccessLayer.RoutRepository objRout = new DataAccessLayer.RoutRepository();
+                    DataTable dt = new DataTable();
+                    dt = objRout.GetRouteLineDetails(SelectedRoutName);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        if (i + 1 == dt.Rows.Count + 1)
+                        {
+
+                            break;
+
+                        }
+                        else
+                        {
+                            var latit = Convert.ToDouble(dt.Rows[i]["Latitude"]);//add this
+                            var longit = Convert.ToDouble(dt.Rows[i]["Longitude"]);//add this
+                            MapPoint mp1 = new MapPoint(latit, longit, SpatialReferences.WebMercator);
+                            //MapPoint mp1_aftertransfor = (MapPoint)GeometryEngine.Project(mp1, SpatialReference.Create(4326));
+                            geodetcipointcollection_webmerc.Add(mp1);
+                        }
+                    }
+
+                    var polyline = new Esri.ArcGISRuntime.Geometry.Polyline(geodetcipointcollection_webmerc);
+                    Esri.ArcGISRuntime.Geometry.Geometry geom1 = polyline;
+
+                    // Polyline routeLine = new Polyline(geodetcipointcollection_wgs84);
+                    var config = new SketchEditConfiguration()
+                    {
+                        AllowVertexEditing = true,
+                        AllowMove = true,
+                        AllowRotate = false,
+
+                        ResizeMode = SketchResizeMode.None
+                    };
+                    sketchEditor();
+                    Esri.ArcGISRuntime.Geometry.Geometry newGeometry = await MyMapView.SketchEditor.StartAsync(geom1);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Ignore ... let the user cancel editing
+                }
+            }
+
+        }
+
+        private void btnSaveGeodetic_Click(object sender, RoutedEventArgs e)
+        {
+            _sketchOverlay.Graphics.Clear();
+            routewaypointoverlay.Graphics.Clear();
+            IReadOnlyList<MapPoint> geodroutepoints = null;
+            List<MapPoint> geodroutelinepoints = new List<MapPoint>();
+            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
+            UnderRoot1.IsEnabled = true;
+            Polyline routeLine = new Polyline(geodesic_savbtnpoints_webmerccollection);
+            var temproutegeom = MyMapView.SketchEditor.Geometry;
+            RouteManager objRout = new RouteManager();
+            var geodroutgeom = routeLine as Esri.ArcGISRuntime.Geometry.Polyline;
+            this.builder = new PolylineBuilder(geodroutgeom);
+
+            if (builder.Parts.Count > 0 && temproutegeom == null)
+            {
+                Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
+                var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                foreach (var r in builder.Parts)
+                {
+                    geodroutepoints = r.Points;
+                    // geodroutelinepoints = Mapcoordinates_Aftertransform(geodesicpointlist_copy);
+                    waypointcount = r.PointCount;
+                }
+                DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
+                DataTable dt = new DataTable();
+                dt = objCart.GetRouteLineDetails(txtRouteName1.Text);
+                if (dt.Rows.Count > 0)
+                {
+                    MessageBoxResult result = MessageBox.Show("Route Name Already Exists Do you want to Override", "Information", MessageBoxButton.YesNo, MessageBoxImage.Exclamation);
+
+                    if (MessageBoxResult.Yes == result)
+                    {
+
+                        objMgr.DeleteRouteLineDetailsByName(txtRouteName1.Text.Trim());
+                        objMgr.DeleteRouteLineByName(txtRouteName1.Text.Trim());
+                        int count = 0;
+                        int result1 = objRout.InsertRoute(txtRouteName1.Text, waypointcount,"2");
+                        if (result1 > 0)
+                        {
+                            if (importedlinepoints.Count > 1)//to reset that exisiting imported points
+                            {
+                                importedlinepoints.Clear();
+                                normalizedimportedpoints.Clear();
+                                count++;
+
+                            }
+                            foreach (var ter in geodroutepoints)
+                            {
+                                double lat = ter.X;
+                                double longi = ter.Y;
+                                objRout.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
+                            }
+
+                        }
+                        if (MessageBoxResult.No == result)
+                        {
+                            return;
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    int result1 = objRout.InsertRoute(txtRouteName1.Text, waypointcount,"2");
+                    int count = 0;
+                    if (result1 > 0)
+                    {
+                        if (importedlinepoints.Count > 1)
+                        {
+                            importedlinepoints.Clear();
+                            normalizedimportedpoints.Clear();
+                            count++;
+
+                        }
+                        foreach (var ter in geodroutepoints)
+                        {
+                            double lat = ter.X;
+                            double longi = ter.Y;
+                            objRout.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
+                        }
+                    }
+                }
+
+                for (int i = 0; i < geodroutepoints.Count; i++)
+                {
+                    if (i + 1 == geodroutepoints.Count + 1)
+                    {
+
+                        break;
+
+                    }
+                    else
+                    {
+                        MapPoint loadstartpoint = new MapPoint(geodroutepoints[i].X, geodroutepoints[i].Y, SpatialReferences.WebMercator);
+                        var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
+                        geodesicload_pointlist.Add(start_transform);
+
+                        if (geodesicload_pointlist.Count > 1)
+                        {
+                            Polyline routeLine1 = new Polyline(geodesicload_pointlist);
+                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
+
+                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
+                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
+
+                            if (loxodromeMeasureResult.Distance <= 400)
+                            {
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic1);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                // route_symbolsadding(savepointlist_polydraw);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+
+                            }
+                            else
+                            {
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic2);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                // route_symbolsadding(savepointlist_polydraw);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                //var graphic_new = new Graphic(pathGeometry1, polys3);
+                // _sketchOverlay.Graphics.Add(graphic_new);
+                // route_symbolsadding(symbolspointslist_savebtn);
+            }
+            else
+            {
+                var routegeom = temproutegeom as Esri.ArcGISRuntime.Geometry.Polyline;
+                this.polybroute = new PolylineBuilder(routegeom);
+                RouteManager objRout1 = new RouteManager();
+                Esri.ArcGISRuntime.Geometry.PointCollection geodetcisavepointlist_wgs84 = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+
+                if (polybroute.Parts.Count > 0)
+                {
+                    foreach (var r in polybroute.Parts)
+                    {
+                        geodroutepoints = r.Points;
+                        geodroutelinepoints = Mapcoordinates_Aftertransform(geodroutepoints);
+                        waypointcount = r.PointCount;
+                    }
+                    DataAccessLayer.RoutRepository objCart = new DataAccessLayer.RoutRepository();
+                    DataTable dt = new DataTable();
+                    dt = objCart.GetRouteLineDetails(txtRouteName1.Text);
+                    if (dt.Rows.Count > 0)
+                    {
+                        MessageBoxResult result = MessageBox.Show("Route Name Already Exists Do you want to Override", "Information", MessageBoxButton.YesNo, MessageBoxImage.Exclamation);
+
+                        if (MessageBoxResult.Yes == result)
+                        {
+                            objMgr.DeleteRouteLineDetailsByName(txtRouteName1.Text.Trim());
+                            objMgr.DeleteRouteLineByName(txtRouteName1.Text.Trim());
+                            int result1 = objRout1.InsertRoute(txtRouteName1.Text, waypointcount,"2");
+                            if (result1 > 0)
+                            {
+                                foreach (var ter in geodroutepoints)
+                                {
+
+                                    double lat = ter.X;
+                                    double longi = ter.Y;
+
+                                    MapPoint mpt_web = new MapPoint(lat, longi, SpatialReferences.WebMercator);
+                                    MapPoint mpt_wgs84 = (MapPoint)GeometryEngine.Project(mpt_web, SpatialReference.Create(4326));
+                                    geodetcisavepointlist_wgs84.Add(mpt_wgs84);
+                                    objRout1.InsertRouteDetails(result1, lat.ToString(), longi.ToString());
+                                }
+                            }
+
+                        }
+                        if (MessageBoxResult.No == result)
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        int result = objRout1.InsertRoute(txtRouteName1.Text, waypointcount,"2");
+                        int count = 0;
+                        if (result > 0)
+                        {
+                            if (importedlinepoints.Count > 1)
+                            {
+                                importedlinepoints.Clear();
+                                normalizedimportedpoints.Clear();
+                                count++;
+
+                            }
+                            foreach (var ter in geodroutepoints)
+                            {
+                                double lat = ter.X;
+                                double longi = ter.Y;
+
+                                MapPoint mpt_web = new MapPoint(lat, longi, SpatialReferences.WebMercator);
+                                MapPoint mpt_wgs84 = (MapPoint)GeometryEngine.Project(mpt_web, SpatialReference.Create(4326));
+                                geodetcisavepointlist_wgs84.Add(mpt_wgs84);
+
+
+                                objRout1.InsertRouteDetails(result, lat.ToString(), longi.ToString());
+                            }
+                        }
+                    }
+                }
+
+
+                for (int i = 0; i < geodetcisavepointlist_wgs84.Count; i++)
+                {
+                    if (i + 1 == geodetcisavepointlist_wgs84.Count + 1)
+                    {
+
+                        break;
+
+                    }
+                    else
+                    {
+                        MapPoint loadstartpoint = new MapPoint(geodetcisavepointlist_wgs84[i].X, geodetcisavepointlist_wgs84[i].Y, SpatialReferences.Wgs84);
+                        // var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
+                        geodesicload_pointlist.Add(loadstartpoint);
+
+                        if (geodesicload_pointlist.Count > 1)
+                        {
+                            Polyline routeLine1 = new Polyline(geodesicload_pointlist);
+                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
+
+                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
+                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance,1);
+
+                            if (loxodromeMeasureResult.Distance <= 400)
+                            {
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic1);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                // route_symbolsadding(savepointlist_polydraw);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+
+                            }
+                            else
+                            {
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic2);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                // route_symbolsadding(savepointlist_polydraw);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+                            }
+
+                        }
+
+                    }
+
+                }
+              
+            }
+            if (MyMapView.SketchEditor.CancelCommand.CanExecute(null))
+            {
+                MyMapView.SketchEditor.CancelCommand.Execute(null);
+                MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
+               // MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+            }
+            route_symbolsadding(geodroutepoints);
+            
+            completecommand(creationMode);
+
+            e.Handled = true;
+
+            routelineconfigclear();
+            geodesic_points.Clear();
+            geodesic_savbtnpoints_webmerccollection.Clear();
+            savemenu1.IsEnabled = false;
+            SaveRouteName1.Visibility = Visibility.Hidden;
+
+            SelectedRoutName = txtRouteName1.Text;
+            Mouse.OverrideCursor = Cursors.Arrow;
+            MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
+            MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
+
+
+        }
+
+        private void Geodetc_Import_Click_rtz(object sender, RoutedEventArgs e,string filename)
+        {
+            _sketchOverlay.Graphics.Clear();
+            importedlinepoints.Clear();
+            normalizedimportedpoints.Clear();
+            // Esri.ArcGISRuntime.Geometry.PointCollection importedlinepoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
+            routewaypointoverlay.Graphics.Clear();
+            SelectedRoutName = "";
+            try
+            {
+                //string strfilename = "";
+                //Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+                //// openFileDialog.Filter = "All files (*.*)|*.*";
+                //if (openFileDialog.ShowDialog() == true)
+                //{
+                //    openFileDialog.DefaultExt = ".bsk";
+                //    openFileDialog.Filter = "Basket(.bsk)|*.bsk";
+                //    strfilename = openFileDialog.FileName;
+                //    strfilename = openFileDialog.FileName;
+                //}
+
+                XDocument doc1 = XDocument.Load(filename);
+                XNamespace ns = "http://www.cirm.org/RTZ/1/0";
+                List<MapPoint> _mappoint = new List<MapPoint>();
+                // Esri.ArcGISRuntime.Geometry.PointCollection importedpoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
+                // IReadOnlyList<MapPoint> _mappoint=null;
+                foreach (XElement element in doc1.Root
+                                    .Element(ns + "waypoints")
+                                    .Elements(ns + "waypoint")
+                                    .Elements(ns + "position"))
+                {
+                    Console.WriteLine("Name: {0}; Value: {1}",
+                         (double)element.FirstAttribute,
+                         (double)element.LastAttribute);
+                    MapPoint mpt = new MapPoint((double)element.LastAttribute, (double)element.FirstAttribute);
+                    _mappoint.Add(mpt);
+                    importedlinepoints.Add(mpt);
+                }
+                normalizedimportedpoints = CalcNormalize_latest(_mappoint);
+                //SelectPrdctsunderRoot_Click(_mappoint);
+                //distancemes();
+
+                // Geodetic_normalizedimportedpoints = Mapcoordinates_Aftertransform_PointCollection(importedlinepoints);
+
+
+                for (int i = 0; i < importedlinepoints.Count; i++)
+                {
+                    if (i + 1 == importedlinepoints.Count + 1)
+                    {
+
+                        break;
+
+                    }
+                    else
+                    {
+                        MapPoint loadstartpoint = new MapPoint(importedlinepoints[i].X, importedlinepoints[i].Y, SpatialReferences.Wgs84);
+                        // var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
+                        geodesicload_pointlist.Add(loadstartpoint);
+
+
+                        if (geodesicload_pointlist.Count > 1)
+                        {
+                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
+                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
+                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
+
+                            if (loxodromeMeasureResult.Distance <= 400)
+                            {
+                                Polyline routeLine2 = new Polyline(geodesicload_pointlist);
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic1);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                //  route_symbolsadding(geodesicload_pointlist);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+
+                            }
+                            else
+                            {
+                                Polyline routeLine2 = new Polyline(geodesicload_pointlist);
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic2);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                // route_symbolsadding(geodesicload_pointlist);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+                            }
+
+                        }
+                    }
+                }
+                route_symbolsadding_pointcollection(importedlinepoints);
+                //route_symbolsadding(_mappoint);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        private void Geodetc_csv_Import_Click(object sender, RoutedEventArgs e, string fpath)
+        {
+            _sketchOverlay.Graphics.Clear();
+            importedlinepoints.Clear();
+            routewaypointoverlay.Graphics.Clear();
+            List<MapPoint> _mappoint = new List<MapPoint>();
+            List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
+            SelectedRoutName = "";
+            string[] columns =
+                                {
+                                    @"LAT",
+                                    @"LON"
+                                };
+            try
+            {
+                //string strfilename = "";
+                // Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+                // openFileDialog.Filter = "All files (*.*)|*.*";
+                //if (openFileDialog.ShowDialog() == true)
+                //{
+                //    openFileDialog.DefaultExt = ".bsk";
+                //    openFileDialog.Filter = "Basket(.bsk)|*.bsk";
+                //    strfilename = openFileDialog.FileName;
+                //    strfilename = openFileDialog.FileName;
+                //}
+
+                string[] csvlines = File.ReadAllLines(fpath);
+                List<string> strt = new List<string>();
+
+                var coun = csvlines.Count();
+
+                for (int i = 0; i <= coun; i++)
+                {
+                    if (i == coun)
+                    {
+                        // MapPoint mptx = new MapPoint(mpt[i--].X, mpt[i--].Y, SpatialReferences.Wgs84);
+                        // transformed_new.Add(mptx);
+
+                        break;
+
+                    }
+                    if (i >= 4)
+                    {
+                        var laso = csvlines[i].ToString();
+                        var ser = laso.Split(',');
+                        var sear = csvlines[i].ToCharArray();
+                        StringBuilder sb_1 = new StringBuilder();
+                        StringBuilder sb_2 = new StringBuilder();
+                        int cour = 0;
+                        int cour2 = 0;
+                        foreach (var ch in sear)
+                        {
+                            if (Char.IsLetter(ch))
+                            {
+                                sb_1.Append(ch);
+                                cour++;
+                                cour2++;
+                                sb_2.Append(sb_1);
+                            }
+                            else
+                            {
+                                sb_1.Append(ch);
+                            }
+
+
+                            if (cour == 1)
+                            {
+                                sb_1.Clear();
+                                cour--;
+                            }
+                            if (cour2 == 2)
+                            {
+                                strt.Add(sb_2.ToString());
+                                break;
+                            }
+                        }
+                    }
+                }
+                //select the indices of the columns we want
+                foreach (var ser in strt)
+                {
+                    var rer = dotCount_manipulatestring(ser);
+                    var string2 = rer.Item2;
+                    var mpt_wgs = CoordinateFormatter.FromLatitudeLongitude(string2, SpatialReferences.Wgs84);
+                    _mappoint.Add(mpt_wgs);
+                    importedlinepoints.Add(mpt_wgs);
+
+                }
+                normalizedimportedpoints = CalcNormalize_latest(_mappoint);
+                for (int i = 0; i < importedlinepoints.Count; i++)
+                {
+                    if (i + 1 == importedlinepoints.Count + 1)
+                    {
+
+                        break;
+
+                    }
+                    else
+                    {
+                        MapPoint loadstartpoint = new MapPoint(importedlinepoints[i].X, importedlinepoints[i].Y, SpatialReferences.Wgs84);
+                        // var start_transform = (MapPoint)GeometryEngine.Project(loadstartpoint, SpatialReference.Create(4326));
+                        geodesicload_pointlist.Add(loadstartpoint);
+
+
+
+                        if (geodesicload_pointlist.Count > 1)
+                        {
+                            GeodeticDistanceResult loxodromeMeasureResult = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Loxodrome);
+                            GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
+                            var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
+                            var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance,1);
+
+                            if (loxodromeMeasureResult.Distance <= 400)
+                            {
+                                Polyline routeLine2 = new Polyline(geodesicload_pointlist);
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic1 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic1.Attributes["ShortName"] = loxdres.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic1);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                //  route_symbolsadding(geodesicload_pointlist);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+
+                            }
+                            else
+                            {
+                                Polyline routeLine2 = new Polyline(geodesicload_pointlist);
+                                // Densify the polyline to show the geodesic curve.
+                                Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine2, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Geodesic);
+                                var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+                                var _pathGraphic2 = new Graphic(aftereditpathgeom, linesym);
+                                _pathGraphic2.Attributes["ShortName"] = loxdres1.ToString() + " " + "NM";
+                                _sketchOverlay.Graphics.Add(_pathGraphic2);
+                                // _tempsketchOverlay.Graphics.Add(_pathGraphic);
+                                // route_symbolsadding(geodesicload_pointlist);
+                                // builder.AddPart(geodesicpointlist);
+                                geodesicload_pointlist.RemoveAt(0);
+                            }
+
+                        }
+
+
+                    }
+                }
+                route_symbolsadding_pointcollection(importedlinepoints);
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
 
 
        
+        private void import_both(object sender, RoutedEventArgs e)
+        {
+            string strfilename = "";
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            // openFileDialog.Filter = "All files (*.*)|*.*";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                openFileDialog.DefaultExt = ".bsk";
+                openFileDialog.Filter = "Basket(.bsk)|*.bsk";
+                strfilename = openFileDialog.FileName;
+
+            }
+            if (strfilename.Contains(".csv"))
+            {
+                Geodetc_csv_Import_Click(sender, e, strfilename);
+                // csv_export_new(sender, e, strfilename);
+            }
+            else if (strfilename.Contains(".rtz"))
+            {
+                Geodetc_Import_Click_rtz(sender, e, strfilename);
+                //csv_export(sender, e, strfilename);
+            }
+
+        }
+        private void Undergeodetic_polylineRoot_Click(object sender, RoutedEventArgs e)
+        {
+            Polyline routeLine = new Polyline(symbolspointslist_savebtn);
+            Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine, 1, LinearUnits.Kilometers, GeodeticCurveType.Geodesic);
+            var polys3 = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
+            var graphic1 = new Graphic(pathGeometry1, polys3);
+            Geometry_OnviewTap(graphic1);
+        }
     }
+
     public enum SampleState
     {
         AddingStops,
