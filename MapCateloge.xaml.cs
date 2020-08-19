@@ -794,7 +794,8 @@ namespace EWLDitital.PresentationLayer.Views
                 MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
                 MyMapView.MouseMove += MapView_MouseMoved;
                 MyMapView.PreviewMouseWheel += mouseWheel_scale;
-                MyMapView.MouseRightButtonDown += mouseWheel_rightclic;
+                
+                MyMapView.PreviewMouseMove += MapView_Mouse_move_cursor_line;
                 // MyMapView.PreviewMouseWheel += mouseWheel_Changed;
 
             }
@@ -802,6 +803,29 @@ namespace EWLDitital.PresentationLayer.Views
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+        private async void MapView_Mouse_move_cursor_line(object sender, MouseEventArgs e)
+        {
+            var pixelTolerance = 1;
+            var returnPopupsOnly = false;
+            var maxResults = 100;
+            System.Windows.Point tapScreenPoint = e.GetPosition(MyMapView);
+            // MapPoint mapPoint = geoViewInputEventArgs.Location;
+
+            IReadOnlyList<IdentifyGraphicsOverlayResult> idGraphicOverlayResults = await MyMapView.IdentifyGraphicsOverlaysAsync(tapScreenPoint, pixelTolerance, returnPopupsOnly, maxResults);
+            foreach (var te in idGraphicOverlayResults)
+            {
+                if (te.GraphicsOverlay == _sketchOverlay)
+                {
+                    Mouse.OverrideCursor = Cursors.Cross;
+                }
+                else
+                {
+                    Mouse.OverrideCursor = Cursors.Arrow;
+                }
+            }
+
+
         }
         private void mouseWheel_rightclic(object sender,MouseEventArgs e)//declaring a function
         {
@@ -6604,6 +6628,11 @@ namespace EWLDitital.PresentationLayer.Views
                     MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
                     MyMapView.GeoViewTapped -= MyMapViewOnGeoViewTapped;
                 }
+                UndoRoot1.IsEnabled = false;
+                RedoRoot1.IsEnabled = false;
+                EditRoot1.IsEnabled = false;
+                UnderRoot1.IsEnabled = false;
+                MyMapView.MouseRightButtonDown -= mouseWheel_rightclic;
                 Mouse.OverrideCursor = Cursors.Arrow;
                 routewaypointoverlay.Graphics.Clear();
                 routelineconfigclear();
@@ -6943,6 +6972,7 @@ namespace EWLDitital.PresentationLayer.Views
         {
             try
             {
+                EditRoot1.IsEnabled = true;
                 routewaypointoverlay.Graphics.Clear();
                 _sketchOverlay.Graphics.Clear();
                 loadpoints.Clear();
@@ -9714,6 +9744,7 @@ namespace EWLDitital.PresentationLayer.Views
 
         private async void geodetic_line(object sender, RoutedEventArgs e)
         {
+            MyMapView.MouseRightButtonDown += mouseWheel_rightclic;
             _sketchOverlay.Graphics.Clear();
             routewaypointoverlay.Graphics.Clear();
             UnderRoot1.IsEnabled = false;
@@ -9721,6 +9752,8 @@ namespace EWLDitital.PresentationLayer.Views
             symbolspointslist_savebtn.Clear();
             Mouse.OverrideCursor = Cursors.Cross;
             savemenu1.IsEnabled = true;
+            UndoRoot1.IsEnabled = true;
+            RedoRoot1.IsEnabled = true;
             MyMapView.GeoViewTapped -= MapViewTapped_Mouse_Point;
             // Add a graphic at JFK to serve as the origin.
             // MyMapView.GeoViewTapped += MyMapViewOn_GeoView_Tapped_new;
@@ -9742,7 +9775,8 @@ namespace EWLDitital.PresentationLayer.Views
             }
             catch (Exception ex)
             {
-               // MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MyMapView.MouseRightButtonDown -= mouseWheel_rightclic;
+                // MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             //  Mouse.OverrideCursor = Cursors.Arrow;
@@ -9823,6 +9857,7 @@ namespace EWLDitital.PresentationLayer.Views
             routewaypointoverlay.Graphics.Clear();
             _sketchOverlay.Graphics.Clear();
             symbolspointslist_savebtn.Clear();
+            EditRoot1.IsEnabled = true;
             List<MapPoint> geodeticloadpoints = new List<MapPoint>();
             Esri.ArcGISRuntime.Geometry.PointCollection geodeticPointCollection = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.WebMercator);
             List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
@@ -9968,8 +10003,12 @@ namespace EWLDitital.PresentationLayer.Views
         private async void Geodetic_EditRoot_Click(object sender, RoutedEventArgs e)
         {
             // densifyandgeneralize();
+            MyMapView.MouseRightButtonDown += mouseWheel_rightclic;
             symbolspointslist_savebtn.Clear();//add this line
             UnderRoot1.IsEnabled = false;
+            UndoRoot1.IsEnabled = true;
+            RedoRoot1.IsEnabled = true;
+            EditRoot1.IsEnabled = true;
             if (SelectedRoutName == "" && importedlinepoints.Count > 0)
             {
                 try
@@ -10108,7 +10147,7 @@ namespace EWLDitital.PresentationLayer.Views
                     // Ignore ... let the user cancel editing
                 }
             }
-
+            MyMapView.MouseRightButtonDown -= mouseWheel_rightclic;
         }
 
         private void btnSaveGeodetic_Click(object sender, RoutedEventArgs e)
@@ -10119,6 +10158,7 @@ namespace EWLDitital.PresentationLayer.Views
             List<MapPoint> geodroutelinepoints = new List<MapPoint>();
             List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
             UnderRoot1.IsEnabled = true;
+            EditRoot1.IsEnabled = true;
             Polyline routeLine = new Polyline(geodesic_savbtnpoints_webmerccollection);
             var temproutegeom = MyMapView.SketchEditor.Geometry;
             RouteManager objRout = new RouteManager();
@@ -10400,7 +10440,7 @@ namespace EWLDitital.PresentationLayer.Views
                // MyMapView.GeoViewTapped += MapViewTapped_Mouse_Point;
             }
             route_symbolsadding(geodroutepoints);
-            
+            MyMapView.MouseRightButtonDown -= mouseWheel_rightclic;
             completecommand(creationMode);
 
             e.Handled = true;
@@ -10409,6 +10449,8 @@ namespace EWLDitital.PresentationLayer.Views
             geodesic_points.Clear();
             geodesic_savbtnpoints_webmerccollection.Clear();
             savemenu1.IsEnabled = false;
+            UndoRoot1.IsEnabled = false;
+            RedoRoot1.IsEnabled = false;
             SaveRouteName1.Visibility = Visibility.Hidden;
 
             SelectedRoutName = txtRouteName1.Text;
@@ -10424,6 +10466,7 @@ namespace EWLDitital.PresentationLayer.Views
             _sketchOverlay.Graphics.Clear();
             importedlinepoints.Clear();
             normalizedimportedpoints.Clear();
+            EditRoot1.IsEnabled = true;
             // Esri.ArcGISRuntime.Geometry.PointCollection importedlinepoints = new Esri.ArcGISRuntime.Geometry.PointCollection(SpatialReferences.Wgs84);
             List<MapPoint> geodesicload_pointlist = new List<MapPoint>();
             routewaypointoverlay.Graphics.Clear();
