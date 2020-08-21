@@ -63,8 +63,8 @@ namespace EWLDitital.PresentationLayer.Views
                             ""kerning"":false,
                             ""type"":""esriTS"",
                             ""verticalAlignment"":""middle"",
-                            ""xoffset"":0,
-                            ""yoffset"":0
+                            ""xoffset"":5,
+                            ""yoffset"":5
                         }
                }";
 
@@ -92,8 +92,9 @@ namespace EWLDitital.PresentationLayer.Views
                             ""kerning"":false,
                             ""type"":""esriTS"",
                             ""verticalAlignment"":""middle"",
-                            ""xoffset"":0,
-                            ""yoffset"":0
+                            ""xoffset"":5,
+                            ""yoffset"":5
+                            
                         }
                }";
 
@@ -122,9 +123,8 @@ namespace EWLDitital.PresentationLayer.Views
                             ""kerning"":false,
                             ""type"":""esriTS"",
                             ""verticalAlignment"":""middle"",
-                            ""xoffset"":0,
-                            
-                            ""yoffset"":0
+                            ""xoffset"":1,
+                            ""yoffset"":1
                         },
                             ""repeatLabelDistance"":432,
                             ""repeatLabel"":true,
@@ -137,7 +137,7 @@ namespace EWLDitital.PresentationLayer.Views
         private const string waypointLabelDefinitionJson =
         @"{
                     ""labelExpressionInfo"":{""expression"":""$feature.ShortName""},
-                    ""labelPlacement"":""esriServerPointLabelPlacementCenterRight"",
+                    ""labelPlacement"":""esriServerPointLabelPlacementAboveCenter"",
                     ""symbol"":
                         { 
                            
@@ -159,9 +159,9 @@ namespace EWLDitital.PresentationLayer.Views
                             ""kerning"":false,
                             ""type"":""esriTS"",
                             ""verticalAlignment"":""middle"",
-                            ""repeatLabelDistance"":0,
-                            ""xoffset"":0,
-                            ""yoffset"":0
+                            
+                            ""xoffset"":5,
+                            ""yoffset"":5
                         },
                     
                             ""minScale"": 8000000,
@@ -3694,7 +3694,8 @@ namespace EWLDitital.PresentationLayer.Views
                 _polypointGraphic = new Graphic(point, pointSymbol);
 
                 //Add point graphic to graphic overlay
-                // _sketchOverlay.Graphics.Add(_polypointGraphic);
+                 _sketchOverlay.Graphics.Add(_polypointGraphic);
+                
                 return _polypointGraphic;
             }
             catch (Exception ex)
@@ -6795,7 +6796,7 @@ namespace EWLDitital.PresentationLayer.Views
                 string message = "Are you sure you want to clear this selection tool?";
                 string caption = "Confirmation";
                 lstSelectedRoute.Clear();
-                SelectedRoutName = "";
+               // SelectedRoutName = "";
                 if (MyMapView.SketchEditor.Geometry == null)
                 {
                     MessageBox.Show("No Rectangle Geometry Present On Map");
@@ -10047,7 +10048,7 @@ namespace EWLDitital.PresentationLayer.Views
                 var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
                 var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
 
-                if (loxodromeMeasureResult.Distance <= 400)
+                if (loxodromeMeasureResult.Distance <= 600)
                 {
                     Esri.ArcGISRuntime.Geometry.Geometry pathGeometry1 = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
                     var linesym = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, System.Drawing.Color.FromArgb(255, 69, 0), 1);
@@ -10131,7 +10132,7 @@ namespace EWLDitital.PresentationLayer.Views
                             GeodeticDistanceResult loxodromeMeasureResult1 = GeometryEngine.DistanceGeodetic(geodesicload_pointlist.ElementAt(0), geodesicload_pointlist.ElementAt(1), LinearUnits.NauticalMiles, AngularUnits.Degrees, GeodeticCurveType.Geodesic);
                             var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
                             var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
-                            if (loxodromeMeasureResult.Distance <= 400)
+                            if (loxodromeMeasureResult.Distance <= 600)
                             {
                                 Polyline routeLine2 = new Polyline(geodesicload_pointlist);
                                 // Densify the polyline to show the geodesic curve.
@@ -10484,7 +10485,7 @@ namespace EWLDitital.PresentationLayer.Views
                                 var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
                                 var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
 
-                                if (loxodromeMeasureResult.Distance <= 400)
+                                if (loxodromeMeasureResult.Distance <= 600)
                                 {
                                     // Densify the polyline to show the geodesic curve.
                                     Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
@@ -10623,7 +10624,7 @@ namespace EWLDitital.PresentationLayer.Views
                                 var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
                                 var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
 
-                                if (loxodromeMeasureResult.Distance <= 400)
+                                if (loxodromeMeasureResult.Distance <= 600)
                                 {
                                     // Densify the polyline to show the geodesic curve.
                                     Esri.ArcGISRuntime.Geometry.Geometry aftereditpathgeom = GeometryEngine.DensifyGeodetic(routeLine1, 1, LinearUnits.NauticalMiles, GeodeticCurveType.Loxodrome);
@@ -10760,7 +10761,7 @@ namespace EWLDitital.PresentationLayer.Views
                             var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
                             var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
 
-                            if (loxodromeMeasureResult.Distance <= 400)
+                            if (loxodromeMeasureResult.Distance <= 600)
                             {
                                 Polyline routeLine2 = new Polyline(geodesicload_pointlist);
                                 // Densify the polyline to show the geodesic curve.
@@ -10923,7 +10924,7 @@ namespace EWLDitital.PresentationLayer.Views
                             var loxdres = Math.Round(loxodromeMeasureResult.Distance, 1);
                             var loxdres1 = Math.Round(loxodromeMeasureResult1.Distance, 1);
 
-                            if (loxodromeMeasureResult.Distance <= 400)
+                            if (loxodromeMeasureResult.Distance <= 600)
                             {
                                 Polyline routeLine2 = new Polyline(geodesicload_pointlist);
                                 // Densify the polyline to show the geodesic curve.
